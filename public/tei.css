@@ -1,0 +1,8 @@
+tei-pb {
+  display: block !important;
+  border: 1px solid black !important;
+  content: "xxx";
+  width: 20px !important;
+  height: 20px !important;
+  background-image: url('/images/tei-logo-sm.png');
+}
