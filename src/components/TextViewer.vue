@@ -35,7 +35,7 @@ export default {
       console.log(this.CETEIcean);
     },
     initText() {
-      axios.get(`/texts/${this.bid}.xml`)
+      axios.get(`texts/${this.bid}.xml`)
         .then((response) => {
           this.CETEIcean.makeHTML5(response.data, (dom) => {
             this.$refs.viewer.append(dom);
