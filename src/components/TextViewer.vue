@@ -28,7 +28,7 @@ export default {
       const behaviors = {
         tei: {
           lb: ['<br />'],
-          pb: ['<a title="新日本古典籍総合目録DB" target="_blank" href="$@facs">新</a>', 'test'],
+          pb: ['<a><img class="jumpTo" title="移動" data-facs="$@facs" src="images/book-open-page-variant-outline.svg" /></a><a title="新日本古典籍総合目録DBで開く" target="_blank" href="$@facs"><img src="images/open-in-new.svg" /></a>'],
         },
       };
       this.CETEIcean.addBehaviors(behaviors);
@@ -39,12 +39,24 @@ export default {
         .then((response) => {
           this.CETEIcean.makeHTML5(response.data, (dom) => {
             this.$refs.viewer.append(dom);
-            this.$refs.sp.$refs.content.scrollLeft = Number.MAX_SAFE_INTEGER;
+            window.x = this.$refs.sp.$refs.content;
+            const c = this.$refs.sp.$refs.content;
+            c.scrollLeft = c.scrollWidth;
+            // not work well with `Number.MAX_SAFE_INTEGER`...
+
+            c.addEventListener('click', this.jumpToPage, false);
           });
         })
         .catch((error) => {
           console.log('TextViewer: axios: ', error);
         });
+    },
+    jumpToPage(event) {
+      console.log(event.target);
+      if (event.target.classList.contains('jumpTo')) {
+        console.log('ok', event.target.dataset.facs);
+        event.preventDefault();
+      }
     },
   },
   mounted() {

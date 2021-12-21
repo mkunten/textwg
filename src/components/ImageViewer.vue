@@ -1,26 +1,48 @@
 <template>
-  <div class="imageviewer grid">
-    <div class="miradorviewer md:w-12 lg:w-8">
-      <Mirador3 mirador-id="mirador" manifestURI="manifestURI2" />
-    </div>
-    <div class="textviewer md:w-12 lg:w-4">
-      <TextViewer />
-    </div>
-  </div>
+  <SelectButton v-model="layout"
+    :options="layoutOptions" optionValue="value">
+    <template #option="slotProps">
+      <mdicon :name="slotProps.option.icon" />
+    </template>
+  </SelectButton>
+  <Splitter :layout="layout">
+    <SplitterPanel>
+      <div class="miradorviewer">
+        <Mirador3 mirador-id="mirador" manifestURI="manifestURI2" />
+      </div>
+    </SplitterPanel>
+    <SplitterPanel>
+      <div class="textviewer">
+        <TextViewer />
+      </div>
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <script>
+import Splitter from 'primevue/splitter';
+import SplitterPanel from 'primevue/splitterpanel';
 import Mirador3 from '@/components/Mirador3.vue';
 import TextViewer from '@/components/TextViewer.vue';
 
 export default {
   name: 'ImageViewer',
   components: {
+    Splitter,
+    SplitterPanel,
     Mirador3,
     TextViewer,
   },
   data() {
     return {
+      layout: 'horizontal',
+      layoutOptions: [{
+        icon: 'view-split-vertical',
+        value: 'horizontal',
+      }, {
+        icon: 'view-split-horizontal',
+        value: 'vertical',
+      }],
       manifestURI: null,
       manifestData: null,
     };
@@ -28,7 +50,11 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+.p-splitter-panel {
+  overflow-x: hidden;
+}
+
 .imageviewer {
   width: 100%;
   height: 600px;
@@ -38,32 +64,12 @@ export default {
 
 .miradorviewer {
   position: relative;
-  height: 400px;
+  height: 100%;
 }
 
 .textviewer {
-  height: 200px;
-}
-
-.textviewer .p-scrollpanel-bar {
-  background-color: #1976d2;
-  opacity: 1;
-  transition: background-color .3s;
-}
-
-$sm:576px !default;
-$md:768px !default;
-$lg:992px !default;
-$xl:1200px !default;
-@media screen and (min-width: $lg) {
-  .imageviewer {
-    height: 600px;
-  }
-  .miradorviewer {
-    height: 600px;
-  }
-  .textviewer {
-    height: 600px;
-  }
+  position: relative;
+  max-width: 95%;
+  height: 100%;
 }
 </style>
