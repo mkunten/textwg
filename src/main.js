@@ -1,8 +1,8 @@
 /* eslint-disable import/order */
 import { createApp } from 'vue';
 import App from './App.vue';
-import router from './router';
 import store from './store';
+import router from './router';
 
 import mdiVue from 'mdi-vue/v3';
 import * as mdijs from '@mdi/js';
@@ -20,8 +20,7 @@ import ja from '@/i18n/locale/ja.js';
 /* eslint-enable import/order */
 
 // app
-const app = createApp(App);
-app
+createApp(App)
   .use(store)
   .use(router)
   .use(mdiVue, { icons: mdijs })

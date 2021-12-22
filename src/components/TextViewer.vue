@@ -20,7 +20,19 @@ export default {
       CETEIcean: null,
     };
   },
+  computed: {
+    m3() {
+      console.log(this.$store.state.m3, 3);
+      return this.$store.state.m3;
+    },
+    manifest() {
+      return this.$store.state.manifest;
+    },
+  },
   methods: {
+    getCanvasById(id) {
+      return this.$store.getters.getCanvasById(id);
+    },
     initCETEIcean() {
       this.CETEIcean = new CETEI({
         ignoreFragmentId: true,
@@ -32,7 +44,6 @@ export default {
         },
       };
       this.CETEIcean.addBehaviors(behaviors);
-      console.log(this.CETEIcean);
     },
     initText() {
       axios.get(`texts/${this.bid}.xml`)
@@ -52,9 +63,12 @@ export default {
         });
     },
     jumpToPage(event) {
-      console.log(event.target);
       if (event.target.classList.contains('jumpTo')) {
-        console.log('ok', event.target.dataset.facs);
+        const frame = event.target.dataset.facs.replace(/^.*\//, '') - 1;
+        const action = window.Mirador.actions
+          .setCanvas('default', this.getCanvasById(frame));
+        this.m3.store.dispatch(action);
+
         event.preventDefault();
       }
     },

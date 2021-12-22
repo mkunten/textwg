@@ -3,6 +3,8 @@
 </template>
 
 <script>
+import { mapMutations } from 'vuex';
+
 export default {
   name: 'Mirador3',
   components: {
@@ -13,23 +15,35 @@ export default {
   ],
   data() {
     return {
-      miradorInstance: null,
     };
   },
-  mounted() {
-    this.miradorInstance = window.Mirador.viewer({
+  methods: {
+    ...mapMutations([
+      'setM3',
+    ]),
+  },
+  async mounted() {
+    await this.$store.dispatch('setBid', 200003074);
+    const manifestUri = this.$store.getters.getManifestUri;
+    const manifests = {};
+    manifests[manifestUri] = {
+      provider: 'NIJL',
+    };
+    const m3 = window.Mirador.viewer({
+      language: 'ja',
       id: this.miradorId,
-      manifests: {
-        'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest': {
-          provider: 'NIJL',
-        },
+      window: {
+        allowClose: false,
+        sideBarOpenByDefault: true,
       },
+      manifests,
       windows: [{
-        loadedManifest: 'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest',
-        canvasIndex: 1,
+        id: 'default',
+        loadedManifest: manifestUri,
         thumbnameilNavigationPosition: 'far-bottom',
       }],
     });
+    this.setM3(m3);
   },
 };
 </script>
