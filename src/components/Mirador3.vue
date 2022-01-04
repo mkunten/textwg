@@ -3,47 +3,76 @@
 </template>
 
 <script>
-import { mapMutations } from 'vuex';
-
 export default {
   name: 'Mirador3',
-  components: {
-  },
   props: [
     'miradorId',
-    'manifestURI',
   ],
   data() {
     return {
     };
   },
-  methods: {
-    ...mapMutations([
-      'setM3',
-    ]),
+  computed: {
+    m3() {
+      return this.$store.state.m3;
+    },
+    selectedText() {
+      return this.$store.state.selectedText;
+    },
+    texts() {
+      return this.$store.state.texts;
+    },
   },
-  async mounted() {
-    await this.$store.dispatch('setBid', 200003074);
-    const manifestUri = this.$store.getters.getManifestUri;
-    const manifests = {};
-    manifests[manifestUri] = {
-      provider: 'NIJL',
-    };
-    const m3 = window.Mirador.viewer({
-      language: 'ja',
-      id: this.miradorId,
-      window: {
-        allowClose: false,
-        sideBarOpenByDefault: true,
+  methods: {
+    getM3Window(windowId = 'windowDefault') {
+      return this.m3.store.getState().windows[windowId];
+    },
+    getM3ManifestJSON(windowId = 'windowDefault') {
+      const state = this.m3.store.getState();
+      return state.manifests[state.windows[windowId].manifestId].json;
+    },
+    initM3() {
+      const m3 = window.Mirador.viewer({
+        language: 'ja',
+        id: this.miradorId,
+        window: {
+          sideBarOpenByDefault: false,
+        },
+      });
+      this.$store.commit('setM3', m3);
+      window.m3 = m3; // for debug
+    },
+    setM3Text(text, windowId = 'windowDefault') {
+      if (this.getM3Window(windowId) !== null) {
+        this.m3.store.dispatch(window.Mirador.actions
+          .addWindow({ id: windowId, manifestId: text.manifestURI }));
+      } else {
+        this.m3.store.dispatch(window.Mirador.actions
+          .updateWindow(windowId, { manifestId: text.manifestURI }));
+      }
+    },
+    setM3CanvasByFrame(frame = 0, windowId = 'windowDefault') {
+      this.m3.store.dispatch(window.Mirador.actions
+        .setCanvas(windowId,
+          this.getM3ManifestJSON(windowId).sequences[0]
+            .canvases[frame]['@id']));
+    },
+  },
+  mounted() {
+    this.initM3();
+  },
+  watch: {
+    selectedText: {
+      handler(text, old) {
+        if (!old.manifestURI || text.manifestURI !== old.manifestURI) {
+          this.setM3Text(text);
+        }
+        if (text.frame !== undefined) {
+          this.setM3CanvasByFrame(text.frame);
+        }
       },
-      manifests,
-      windows: [{
-        id: 'default',
-        loadedManifest: manifestUri,
-        thumbnameilNavigationPosition: 'far-bottom',
-      }],
-    });
-    this.setM3(m3);
+      deep: true,
+    },
   },
 };
 </script>

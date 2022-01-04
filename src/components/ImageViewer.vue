@@ -1,4 +1,8 @@
 <template>
+  <DropDown v-model="selectedText"
+    :options="texts" optionLabel="title"
+    optionGroupChildren="items" optionGroupLabel="provider">
+  </DropDown>
   <SelectButton v-model="layout"
     :options="layoutOptions" optionValue="value">
     <template #option="slotProps">
@@ -8,7 +12,7 @@
   <Splitter :layout="layout">
     <SplitterPanel>
       <div class="miradorviewer">
-        <Mirador3 mirador-id="mirador" manifestURI="manifestURI2" />
+        <Mirador3 mirador-id="mirador" />
       </div>
     </SplitterPanel>
     <SplitterPanel>
@@ -20,6 +24,7 @@
 </template>
 
 <script>
+import DropDown from 'primevue/dropdown';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Mirador3 from '@/components/Mirador3.vue';
@@ -28,6 +33,7 @@ import TextViewer from '@/components/TextViewer.vue';
 export default {
   name: 'ImageViewer',
   components: {
+    DropDown,
     Splitter,
     SplitterPanel,
     Mirador3,
@@ -43,9 +49,25 @@ export default {
         icon: 'view-split-horizontal',
         value: 'vertical',
       }],
-      manifestURI: null,
-      manifestData: null,
     };
+  },
+  computed: {
+    selectedText: {
+      get() {
+        return this.$store.state.selectedText;
+      },
+      set(text) {
+        this.$store.commit('setSelectedText', text);
+      },
+    },
+    texts() {
+      return this.$store.state.texts;
+    },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      [this.selectedText] = this.texts[0].items;
+    });
   },
 };
 </script>

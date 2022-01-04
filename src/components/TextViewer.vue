@@ -1,32 +1,42 @@
 <template>
-  <ScrollPanel ref="sp" style="width: 100%; height: 100%;">
-    <div ref="viewer" class="tategaki"></div>
-  </ScrollPanel>
+  <TabView ref="tv" @tab-change="onTabChanged" @tab-click="onTabClicked">
+    <TabPanel v-for="xml in selectedText.xmls"
+      :key="xml.label" :header="xml.label">
+      <ScrollPanel :ref="'sp' + xml.label"
+        style="width: 100%; height: 100%;">
+        <div :ref="`viewer${xml.label}`"
+          class="tategaki" @click="onClick"></div>
+      </ScrollPanel>
+    </TabPanel>
+  </TabView>
 </template>
 
 <script>
 import axios from 'axios';
 import CETEI from 'CETEIcean';
 import ScrollPanel from 'primevue/scrollpanel';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
 
 export default {
   name: 'TextViewer',
   components: {
     ScrollPanel,
+    TabPanel,
+    TabView,
   },
   data() {
     return {
-      bid: 200003074,
       CETEIcean: null,
+      xmlLoaded: null,
     };
   },
   computed: {
     m3() {
-      console.log(this.$store.state.m3, 3);
       return this.$store.state.m3;
     },
-    manifest() {
-      return this.$store.state.manifest;
+    selectedText() {
+      return this.$store.state.selectedText;
     },
   },
   methods: {
@@ -41,41 +51,63 @@ export default {
         tei: {
           lb: ['<br />'],
           pb: ['<a><img class="jumpTo" title="移動" data-facs="$@facs" src="images/book-open-page-variant-outline.svg" /></a><a title="新日本古典籍総合目録DBで開く" target="_blank" href="$@facs"><img src="images/open-in-new.svg" /></a>'],
+          surface: null,
+          graphic: null,
         },
       };
       this.CETEIcean.addBehaviors(behaviors);
     },
-    initText() {
-      axios.get(`texts/${this.bid}.xml`)
-        .then((response) => {
-          this.CETEIcean.makeHTML5(response.data, (dom) => {
-            this.$refs.viewer.append(dom);
-            window.x = this.$refs.sp.$refs.content;
-            const c = this.$refs.sp.$refs.content;
-            c.scrollLeft = c.scrollWidth;
-            // not work well with `Number.MAX_SAFE_INTEGER`...
-
-            c.addEventListener('click', this.jumpToPage, false);
-          });
-        })
-        .catch((error) => {
-          console.log('TextViewer: axios: ', error);
-        });
+    resetText() {
+      this.xmlLoaded = [];
+      this.$nextTick(() => {
+        this.$refs.tv.$el
+          .getElementsByClassName('p-tabview-nav-link')[0].click();
+      });
     },
-    jumpToPage(event) {
+    loadXML(idx, xml) {
+      if (!this.xmlLoaded[idx]) {
+        this.xmlLoaded[idx] = true;
+        axios.get(xml.uri)
+          .then((response) => {
+            this.CETEIcean.makeHTML5(response.data, (dom) => {
+              const v = this.$refs[`viewer${xml.label}`];
+              v.append(dom);
+              v.parentNode.scrollLeft = v.parentNode.scrollWidth;
+              // not work well with `Number.MAX_SAFE_INTEGER`...
+            });
+          })
+          .catch((error) => {
+            console.log('TextViewer: axios: ', error);
+          });
+      }
+    },
+    onClick(event) {
       if (event.target.classList.contains('jumpTo')) {
-        const frame = event.target.dataset.facs.replace(/^.*\//, '') - 1;
-        const action = window.Mirador.actions
-          .setCanvas('default', this.getCanvasById(frame));
-        this.m3.store.dispatch(action);
-
+        const frame = event.target.dataset.facs
+          .replace(/^.*\/(\d+)/, '$1') - 1;
+        this.$store.dispatch('setFrame', frame);
         event.preventDefault();
       }
+    },
+    onTabChanged(event) {
+      this.loadXML(event.index, this.selectedText.xmls[event.index]);
+    },
+    onTabClicked(event) {
+      this.loadXML(event.index, this.selectedText.xmls[event.index]);
     },
   },
   mounted() {
     this.initCETEIcean();
-    this.initText();
+  },
+  watch: {
+    selectedText: {
+      handler(text, old) {
+        if (!old.manifestURI || text.manifestURI !== old.manifestURI) {
+          this.resetText();
+        }
+      },
+      deep: true,
+    },
   },
 };
 </script>
