@@ -22,6 +22,9 @@ export default {
     texts() {
       return this.$store.state.texts;
     },
+    param() {
+      return this.$store.state.param;
+    },
   },
   methods: {
     getM3Window(windowId = 'windowDefault') {
@@ -51,11 +54,13 @@ export default {
           .updateWindow(windowId, { manifestId: text.manifestURI }));
       }
     },
-    setM3CanvasByFrame(frame = 0, windowId = 'windowDefault') {
+    setM3CanvasById(id, windowId = 'windowDefault') {
       this.m3.store.dispatch(window.Mirador.actions
-        .setCanvas(windowId,
-          this.getM3ManifestJSON(windowId).sequences[0]
-            .canvases[frame]['@id']));
+        .setCanvas(windowId, id));
+    },
+    setM3CanvasByFrame(frame, windowId = 'windowDefault') {
+      this.setM3CanvasById(this.getM3ManifestJSON(windowId)
+        .sequences[0].canvases[frame]['@id']);
     },
   },
   mounted() {
@@ -63,12 +68,22 @@ export default {
   },
   watch: {
     selectedText: {
-      handler(text, old) {
-        if (!old.manifestURI || text.manifestURI !== old.manifestURI) {
-          this.setM3Text(text);
-        }
-        if (text.frame !== undefined) {
-          this.setM3CanvasByFrame(text.frame);
+      handler(text) {
+        this.setM3Text(text);
+      },
+      deep: true,
+    },
+    param: {
+      handler(param) {
+        switch (param.key) {
+          case 'frame':
+            this.setM3CanvasByFrame(param.value);
+            break;
+          case 'canvasId':
+            this.setM3CanvasById(param.value);
+            break;
+          default:
+            console.error('unexpected setParam key');
         }
       },
       deep: true,

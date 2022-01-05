@@ -6,6 +6,7 @@ export default createStore({
     bid: null,
 
     selectedText: {},
+    param: {},
     texts: [{
       provider: 'NIJL',
       items: [{
@@ -20,7 +21,7 @@ export default createStore({
         }],
       }, {
         title: '源氏物語',
-        manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/200003803/manifest',
+        manifestURI: 'https://nakamura196.github.io/jpsearch/data/genji/manifest/01.json',
         xmls: [{
           label: '第1冊',
           uri: 'https://tei-eaj.github.io/parallel_text_viewer/data/pt/01.xml',
@@ -43,14 +44,14 @@ export default createStore({
       state.selectedText = text;
       console.log('store: m: setSelectedText:', state.selectedText);
     },
-    setFrame(state, frame) {
-      state.selectedText.frame = frame;
-      console.log('store: m: setFrame:', frame);
+    setParam(state, param) {
+      state.param = param;
+      console.log('store: m: setParam:', param);
     },
   },
   actions: {
-    setFrame({ commit }, frame) {
-      commit('setFrame', frame);
+    setParam({ commit }, param) {
+      commit('setParam', param);
     },
   },
 });

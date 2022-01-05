@@ -50,9 +50,9 @@ export default {
       const behaviors = {
         tei: {
           lb: ['<br />'],
-          pb: ['<a><img class="jumpTo" title="移動" data-facs="$@facs" src="images/book-open-page-variant-outline.svg" /></a><a title="新日本古典籍総合目録DBで開く" target="_blank" href="$@facs"><img src="images/open-in-new.svg" /></a>'],
+          pb: ['<a><img class="tei-pb-jumpTo" title="移動" data-facs="$@facs" src="images/book-open-page-variant-outline.svg" /></a><a title="新日本古典籍総合目録DBで開く" target="_blank" href="$@facs"><img src="images/open-in-new.svg" /></a>'],
           surface: null,
-          graphic: null,
+          graphic: ['<a><img class="tei-graphic-jumpTo" title="移動" data-n="$@n" data-url="$@url" src="images/book-open-page-variant-outline.svg" /></a>'],
         },
       };
       this.CETEIcean.addBehaviors(behaviors);
@@ -82,10 +82,20 @@ export default {
       }
     },
     onClick(event) {
-      if (event.target.classList.contains('jumpTo')) {
+      if (event.target.classList.contains('tei-pb-jumpTo')) {
         const frame = event.target.dataset.facs
           .replace(/^.*\/(\d+)/, '$1') - 1;
-        this.$store.dispatch('setFrame', frame);
+        this.$store.dispatch('setParam', {
+          key: 'frame',
+          value: frame,
+        });
+        event.preventDefault();
+      } else if (event.target.classList.contains('tei-graphic-jumpTo')) {
+        const canvasId = event.target.dataset.n;
+        this.$store.dispatch('setParam', {
+          key: 'canvasId',
+          value: canvasId,
+        });
         event.preventDefault();
       }
     },
@@ -101,10 +111,8 @@ export default {
   },
   watch: {
     selectedText: {
-      handler(text, old) {
-        if (!old.manifestURI || text.manifestURI !== old.manifestURI) {
-          this.resetText();
-        }
+      handler() {
+        this.resetText();
       },
       deep: true,
     },
