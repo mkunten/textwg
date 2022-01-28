@@ -10,7 +10,7 @@ export default createStore({
     texts: [{
       provider: 'NIJL',
       items: [{
-        title: '十六夜物語',
+        title: '十六夜日記',
         manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest',
         xmls: [{
           label: '上',
@@ -38,15 +38,15 @@ export default createStore({
   mutations: {
     setM3(state, m3) {
       state.m3 = m3;
-      console.log('store: m: setM3:', m3);
+      console.info('store: setM3:', m3);
     },
     setSelectedText(state, text) {
       state.selectedText = text;
-      console.log('store: m: setSelectedText:', state.selectedText);
+      console.info('store: setSelectedText:', state.selectedText);
     },
     setParam(state, param) {
       state.param = param;
-      console.log('store: m: setParam:', param);
+      console.info('store: setParam:', param);
     },
   },
   actions: {

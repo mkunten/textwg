@@ -43,13 +43,14 @@ export default {
         },
       });
       this.$store.commit('setM3', m3);
-      window.m3 = m3; // for debug
+      window.m3 = m3; // for debugging
     },
     setM3Text(text, windowId = 'windowDefault') {
       if (this.getM3Window(windowId) !== null) {
         this.m3.store.dispatch(window.Mirador.actions
           .addWindow({ id: windowId, manifestId: text.manifestURI }));
       } else {
+        console.info('m3 update');
         this.m3.store.dispatch(window.Mirador.actions
           .updateWindow(windowId, { manifestId: text.manifestURI }));
       }
