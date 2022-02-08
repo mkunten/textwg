@@ -28,9 +28,15 @@ export default createStore({
         }],
       }],
     }, {
-      provider: 'NDL',
-      items: [
-      ],
+      provider: 'KU-ORCAS',
+      items: [{
+        title: '廣瀬本万葉集',
+        manifestURI: 'https://www.iiif.ku-orcas.kansai-u.ac.jp/iiif/books/210464810/manifest.json',
+        xmls: [{
+          label: '210464810',
+          uri: 'https://raw.githubusercontent.com/KU-ORCAS/manyoshuTEI/main/manyo_hirose_v02_85_140a.xml',
+        }],
+      }],
     }],
   },
   getters: {

@@ -18,17 +18,18 @@
           <template #content>
             <span class="text-sm">
               <a target="_blank"
-                href="{{ this.selectedXML.uri }}">
+                :href="this.selectedXML.uri">
                 {{ decodeURIComponent(this.selectedXML.uri) }}
               </a>
             </span>
           </template>
         </Card>
       </AccordionTab>
-      <AccordionTab header="TEI Header (converted by CETEIcean)">
+      <AccordionTab header="TEI Header">
         <Card>
           <template #content>
-            <pre>{{ this.jsonPrettify(this.teiHeader) }}</pre>
+          <pre>{{ this.jsonPrettify(this
+            .xmlJsGetObjectByTagname('teiHeader')) }}</pre>
           </template>
         </Card>
       </AccordionTab>
@@ -45,8 +46,12 @@
       :key="xml.label" :header="xml.label">
       <ScrollPanel :ref="'sp' + xml.label"
         style="width: 100%; height: 100%;">
-        <div :ref="`viewer${xml.label}`"
-          class="tategaki" @click="onClick"></div>
+        <div
+          v-if="this.selectedXMLData.elements"
+          :ref="`viewer${xml.label}`"
+          class="tategaki">
+          <Tei :el="this.selectedXMLData.elements[0].elements[1]"></Tei>
+        </div>
       </ScrollPanel>
     </TabPanel>
   </TabView>
@@ -54,7 +59,6 @@
 
 <script>
 import axios from 'axios';
-import CETEI from 'CETEIcean';
 import xmlJs from 'xml-js';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -63,6 +67,7 @@ import ScrollPanel from 'primevue/scrollpanel';
 import SideBar from 'primevue/sidebar';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
+import Tei from '@/components/Tei.vue';
 
 export default {
   name: 'TextViewer',
@@ -74,16 +79,15 @@ export default {
     ScrollPanel,
     TabPanel,
     TabView,
+    Tei,
   },
   data() {
     return {
-      CETEIcean: null,
       visibleRight: false,
       tabActiveIndex: 0,
-      xmlLoaded: null,
+      xmlData: {},
       selectedXMLIndex: null,
-      teiHeader: null,
-      teiData: {},
+      teiData: { els: {}, maps: {} },
     };
   },
   computed: {
@@ -94,88 +98,106 @@ export default {
       return this.$store.state.selectedText;
     },
     selectedXML() {
+      if (this.selectedXMLIndex === null) {
+        return null;
+      }
       return this.selectedText.xmls[this.selectedXMLIndex];
+    },
+    selectedXMLData() {
+      if (this.selectedXML === null
+        || this.xmlData[this.selectedXML.uri] === undefined) {
+        return {};
+      }
+      return this.xmlData[this.selectedXML.uri];
     },
   },
   methods: {
     getCanvasById(id) {
       return this.$store.getters.getCanvasById(id);
     },
-    initCETEIcean() {
-      this.CETEIcean = new CETEI({
-        ignoreFragmentId: true,
-      });
-      const behaviors = {
-        tei: {
-          teiHeader: (e) => {
-            this.teiHeaderInit(e.outerHTML);
-            e.innerHTML = '';
-          },
-          lb: ['<br />'],
-          pb: ['<a><img class="tei-pb-jumpTo" title="移動" data-facs="$@facs" src="images/book-open-page-variant-outline.svg" /></a><a title="新日本古典籍総合目録DBで開く" target="_blank" href="$@facs"><img src="images/open-in-new.svg" /></a>'],
-          surface: null,
-          graphic: ['<a><img class="tei-graphic-jumpTo" title="移動" data-n="$@n" data-url="$@url" src="images/book-open-page-variant-outline.svg" /></a>'],
-        },
-      };
-      this.CETEIcean.addBehaviors(behaviors);
-    },
     resetText() {
       this.xmlLoaded = [];
       this.selectedXMLIndex = null;
       this.tabActiveIndex = 0;
+      this.teiData = { els: {}, maps: {} };
       this.$nextTick(() => {
         this.selectedXMLIndex = 0;
       });
     },
-    loadXML(idx, xml) {
-      if (!this.xmlLoaded[idx]) {
-        this.xmlLoaded[idx] = true;
-        axios.get(xml.uri)
-          .then((response) => {
-            this.CETEIcean.makeHTML5(response.data, (dom) => {
-              const v = this.$refs[`viewer${xml.label}`];
-              v.append(dom);
-              v.parentNode.scrollLeft = v.parentNode.scrollWidth;
-              // not work with `Number.MAX_SAFE_INTEGER`...
-            });
-          })
-          .catch((error) => {
-            console.error('TextViewer: axios: ', error);
+    async loadXML(idx) {
+      const xml = this.selectedText.xmls[idx];
+      if (this.xmlData[xml.uri] === undefined) {
+        try {
+          const response = await axios.get(xml.uri);
+          this.xmlData[xml.uri] = xmlJs.xml2js(response.data, {
+            ignoreDeclaration: true,
+            ignoreInstruction: true,
+            ignoreComment: true,
           });
-      }
-    },
-    onClick(event) {
-      if (event.target.classList.contains('tei-pb-jumpTo')) {
-        const frame = event.target.dataset.facs
-          .replace(/^.*\/(\d+)/, '$1') - 1;
-        this.$store.dispatch('setParam', {
-          key: 'frame',
-          value: frame,
-        });
-        event.preventDefault();
-      } else if (event.target.classList.contains('tei-graphic-jumpTo')) {
-        const canvasId = event.target.dataset.n;
-        this.$store.dispatch('setParam', {
-          key: 'canvasId',
-          value: canvasId,
-        });
-        event.preventDefault();
+          this.xmlData.curr = this.xmlData[xml.uri];
+        } catch (error) {
+          console.error('TextViewer: loadXML:', error);
+        }
       }
     },
     onTabChanged(event) {
       this.selectedXMLIndex = event.index;
     },
-    teiHeaderInit(html) {
-      this.teiHeader = xmlJs.xml2js(html, {
-        compact: true,
-        elementNameFn: (name) => name.slice(4),
-      });
-      console.log(this.teiHeader.teiheader.filedesc.sourcedesc.listwit);
-      // todo
+    xmlJsToText(obj) {
+      return obj.elements.reduce(this.xmlJsToTextWalk, '');
     },
-    jsonPrettify(json) {
-      return xmlJs.json2xml(json, {
-        compact: true,
+    xmlJsToTextWalk(prev, curr) {
+      if (curr.type === 'text') {
+        return `${prev}${curr.text}`;
+      }
+      return curr.elements.reduce(this.xmlJsToTextWalk, prev);
+    },
+    // find a element by a tagname
+    xmlJsGetObjectByTagname(tagname) {
+      if (this.teiData.els[tagname] === undefined) {
+        this.xmlJsGetObjectsByTagnameInit(tagname);
+      }
+      if (this.teiData.els[tagname].length > 0) {
+        return this.teiData.els[tagname][0];
+      }
+      return null;
+    },
+    // find elements by a tagname
+    xmlJsGetObjectsByTagname(tagname) {
+      if (this.teiData.els[tagname] === undefined) {
+        this.xmlJsGetObjectsByTagnameInit(tagname);
+      }
+      return this.teiData.els[tagname];
+    },
+    xmlJsGetObjectsByTagnameInit(tagname) {
+      this.teiData.els[tagname] = [];
+      this.xmlJsGetObjectsByTagnameInitWalk(this.xmlData.curr, tagname);
+    },
+    xmlJsGetObjectsByTagnameInitWalk(obj, tagname) {
+      if (!obj.elements) {
+        return;
+      }
+      obj.elements.forEach((o) => {
+        if (o.name === tagname) {
+          this.teiData.els[tagname].push(o);
+        } else {
+          this.xmlJsGetObjectsByTagnameInitWalk(o, tagname);
+        }
+      });
+    },
+    // create a key(xml:id)-value map by a tagname
+    xmlJsToMapByTagname(tagname) {
+      this.teiData.maps[tagname] = {};
+      this.xmlJsGetObjectsByTagname(tagname).forEach((o) => {
+        this.teiData.maps[tagname][o.attributes['xml:id']] = this.xmlJsToText(o);
+      });
+    },
+    // get prettified json string
+    jsonPrettify(obj) {
+      if (!obj) {
+        return '';
+      }
+      return xmlJs.json2xml(obj, {
         spaces: 2,
         fullTagEmptyElement: true,
         indentCdata: true,
@@ -184,7 +206,7 @@ export default {
     },
   },
   mounted() {
-    this.initCETEIcean();
+    // this.initCETEIcean();
   },
   watch: {
     selectedText: {
@@ -196,7 +218,7 @@ export default {
     selectedXMLIndex: {
       handler(idx) {
         if (idx !== null) {
-          this.loadXML(idx, this.selectedText.xmls[idx]);
+          this.loadXML(idx);
         }
       },
       deep: true,
