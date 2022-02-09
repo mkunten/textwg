@@ -6,7 +6,7 @@ export default createStore({
     bid: null,
 
     selectedText: {},
-    param: {},
+    m3Param: {},
     texts: [{
       provider: 'NIJL',
       items: [{
@@ -50,14 +50,21 @@ export default createStore({
       state.selectedText = text;
       console.info('store: setSelectedText:', state.selectedText);
     },
-    setParam(state, param) {
-      state.param = param;
-      console.info('store: setParam:', param);
+    setSelectedTextTeiData(state, teiData) {
+      state.selectedText.teiData = teiData;
+      console.info('store: setSelectedTextTeiData:', state.selectedText);
+    },
+    setm3Param(state, m3Param) {
+      state.m3Param = m3Param;
+      console.info('store: setm3Param:', m3Param);
     },
   },
   actions: {
-    setParam({ commit }, param) {
-      commit('setParam', param);
+    setm3Param({ commit }, m3Param) {
+      commit('setm3Param', m3Param);
+    },
+    setSelectedTextTeiData({ commit }, teiData) {
+      commit('setSelectedTextTeiData', teiData);
     },
   },
 });

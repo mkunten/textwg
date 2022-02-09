@@ -47,8 +47,7 @@
       <ScrollPanel :ref="'sp' + xml.label"
         style="width: 100%; height: 100%;">
         <div
-          v-if="this.selectedXMLData.elements"
-          :ref="`viewer${xml.label}`"
+          v-if="this.selectedXMLData"
           class="tategaki">
           <Tei :el="this.selectedXMLData.elements[0].elements[1]"></Tei>
         </div>
@@ -85,9 +84,9 @@ export default {
     return {
       visibleRight: false,
       tabActiveIndex: 0,
-      xmlData: {},
       selectedXMLIndex: null,
-      teiData: { els: {}, maps: {} },
+      xmlData: {}, // key: xml uri; value: xml2json object
+      teiData: {}, // key: xml uri; value: { els: {}, maps: {} },
     };
   },
   computed: {
@@ -106,7 +105,7 @@ export default {
     selectedXMLData() {
       if (this.selectedXML === null
         || this.xmlData[this.selectedXML.uri] === undefined) {
-        return {};
+        return null;
       }
       return this.xmlData[this.selectedXML.uri];
     },
@@ -119,22 +118,24 @@ export default {
       this.xmlLoaded = [];
       this.selectedXMLIndex = null;
       this.tabActiveIndex = 0;
-      this.teiData = { els: {}, maps: {} };
       this.$nextTick(() => {
         this.selectedXMLIndex = 0;
       });
     },
-    async loadXML(idx) {
-      const xml = this.selectedText.xmls[idx];
-      if (this.xmlData[xml.uri] === undefined) {
+    async loadXML() {
+      const { uri } = this.selectedText.xmls[this.selectedXMLIndex];
+      if (!this.selectedXMLData) {
         try {
-          const response = await axios.get(xml.uri);
-          this.xmlData[xml.uri] = xmlJs.xml2js(response.data, {
+          const response = await axios.get(uri);
+          this.xmlData[uri] = xmlJs.xml2js(response.data, {
             ignoreDeclaration: true,
             ignoreInstruction: true,
             ignoreComment: true,
           });
-          this.xmlData.curr = this.xmlData[xml.uri];
+          this.teiData[uri] = { els: {}, maps: {} };
+          this.xmlJsToMapByTagname(uri, 'witness');
+          this.$store.dispatch('setSelectedTextTeiData', this.teiData[uri]);
+          console.log(this.selectedText.teiData);
         } catch (error) {
           console.error('TextViewer: loadXML:', error);
         }
@@ -153,43 +154,44 @@ export default {
       return curr.elements.reduce(this.xmlJsToTextWalk, prev);
     },
     // find a element by a tagname
-    xmlJsGetObjectByTagname(tagname) {
-      if (this.teiData.els[tagname] === undefined) {
-        this.xmlJsGetObjectsByTagnameInit(tagname);
+    xmlJsGetObjectByTagname(uri, tagname) {
+      if (this.teiData[uri].els[tagname] === undefined) {
+        this.xmlJsGetObjectsByTagnameInit(uri, tagname);
       }
-      if (this.teiData.els[tagname].length > 0) {
-        return this.teiData.els[tagname][0];
+      if (this.teiData[uri].els[tagname].length > 0) {
+        return this.teiData[uri].els[tagname][0];
       }
       return null;
     },
     // find elements by a tagname
-    xmlJsGetObjectsByTagname(tagname) {
-      if (this.teiData.els[tagname] === undefined) {
-        this.xmlJsGetObjectsByTagnameInit(tagname);
+    xmlJsGetObjectsByTagname(uri, tagname) {
+      if (this.teiData[uri].els[tagname] === undefined) {
+        this.xmlJsGetObjectsByTagnameInit(uri, tagname);
       }
-      return this.teiData.els[tagname];
+      return this.teiData[uri].els[tagname];
     },
-    xmlJsGetObjectsByTagnameInit(tagname) {
-      this.teiData.els[tagname] = [];
-      this.xmlJsGetObjectsByTagnameInitWalk(this.xmlData.curr, tagname);
+    xmlJsGetObjectsByTagnameInit(uri, tagname) {
+      this.teiData[uri].els[tagname] = [];
+      this.xmlJsGetObjectsByTagnameInitWalk(uri, this.selectedXMLData, tagname);
     },
-    xmlJsGetObjectsByTagnameInitWalk(obj, tagname) {
+    xmlJsGetObjectsByTagnameInitWalk(uri, obj, tagname) {
       if (!obj.elements) {
         return;
       }
       obj.elements.forEach((o) => {
         if (o.name === tagname) {
-          this.teiData.els[tagname].push(o);
+          this.teiData[uri].els[tagname].push(o);
         } else {
-          this.xmlJsGetObjectsByTagnameInitWalk(o, tagname);
+          this.xmlJsGetObjectsByTagnameInitWalk(uri, o, tagname);
         }
       });
     },
-    // create a key(xml:id)-value map by a tagname
-    xmlJsToMapByTagname(tagname) {
-      this.teiData.maps[tagname] = {};
-      this.xmlJsGetObjectsByTagname(tagname).forEach((o) => {
-        this.teiData.maps[tagname][o.attributes['xml:id']] = this.xmlJsToText(o);
+    // create a key(#xml:id)-value map by a tagname
+    xmlJsToMapByTagname(uri, tagname) {
+      this.teiData[uri].maps[tagname] = {};
+      this.xmlJsGetObjectsByTagname(uri, tagname).forEach((o) => {
+        this.teiData[uri]
+          .maps[tagname][`#${o.attributes['xml:id']}`] = this.xmlJsToText(o);
       });
     },
     // get prettified json string
@@ -218,7 +220,7 @@ export default {
     selectedXMLIndex: {
       handler(idx) {
         if (idx !== null) {
-          this.loadXML(idx);
+          this.loadXML();
         }
       },
       deep: true,

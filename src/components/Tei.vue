@@ -63,7 +63,7 @@ export default {
       return str;
     },
     jumpToByCanvasId(canvasId) {
-      this.$store.dispatch('setParam', {
+      this.$store.dispatch('setM3Param', {
         key: 'canvasId',
         value: canvasId,
       });
@@ -71,7 +71,7 @@ export default {
     jumpToByURI(uri) {
       if (uri.indexOf('//kotenseki.nijl.ac.jp/') !== 0) {
         const frame = uri.replace(/^.*\/(\d+)/, '$1') - 1;
-        this.$store.dispatch('setParam', {
+        this.$store.dispatch('setM3Param', {
           key: 'frame',
           value: frame,
         });
