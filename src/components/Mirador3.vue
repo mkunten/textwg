@@ -22,8 +22,8 @@ export default {
     texts() {
       return this.$store.state.texts;
     },
-    param() {
-      return this.$store.state.param;
+    m3Param() {
+      return this.$store.state.m3Param;
     },
   },
   methods: {
@@ -74,14 +74,14 @@ export default {
       },
       deep: true,
     },
-    param: {
-      handler(param) {
-        switch (param.key) {
+    m3Param: {
+      handler(m3Param) {
+        switch (m3Param.key) {
           case 'frame':
-            this.setM3CanvasByFrame(param.value);
+            this.setM3CanvasByFrame(m3Param.value);
             break;
           case 'canvasId':
-            this.setM3CanvasById(param.value);
+            this.setM3CanvasById(m3Param.value);
             break;
           default:
             console.error('unexpected setParam key');

@@ -1,58 +1,27 @@
 <template>
-  <template v-if="this.el !== null">
-    <span :class="`${this.el.type} ${this.el.name}`"></span>
-    <template v-if="this.el.type === 'text'">
-      <span v-if="this.el.text !== ''">{{ this.el.text }}</span>
-    </template>
-    <!-- <template v&#45;else&#45;if="this.el.type === ''"> -->
-    <!-- </template> -->
-    <template v-else-if="this.el.name === 'graphic'">
-      <template v-if="this.el.attributes.n">
-        <mdicon
-          name="book-open-page-variant-outline"
-          title="ビューワで開く"
-          @click.prevent="jumpToByCanvasId(this.el.attributes.n)">
-        </mdicon>
-      </template>
-    </template>
-    <template v-else-if="this.el.name === 'lb'">
-      <br class="tei-lb" />
-    </template>
-    <template v-else-if="this.el.name === 'pb'">
-      <span class="tei-pb">【{{ this.esc(this.el.attributes.n) }}】</span>
-      <template v-if="this.el.attributes.facs">
-        <a target="_blank" :href="this.el.attributes.facs">
-          <mdicon
-            name="open-in-new"
-            title="外部DBで開く">
-          </mdicon>
-        </a>
-        <mdicon
-          name="book-open-page-variant-outline"
-          title="ビューワで開く"
-          @click.prevent="jumpToByURI(this.el.attributes.facs)">
-        </mdicon>
-      </template>
-    </template>
-    <template v-else>
-      <template v-for="(el, idx) in this.el.elements" :key="idx">
-        <span :class="`tei-${el.name}`">
-          <Tei :el ="el" :parents="this.parents.concat(this.el.name)"></Tei>
-        </span>
-      </template>
-    </template>
-  </template>
+  <TeiNodes :el="this.el" :parents="this.parents"></TeiNodes>
 </template>
 
 <script>
+import TeiNodes from '@/components/TeiNodes.vue';
+
 export default {
+  name: 'Tei',
+  components: {
+    TeiNodes,
+  },
   props: {
     el: { type: Object, default: null, required: true },
     parents: { type: Array, default: () => [], required: false },
   },
+  computed: {
+    selectedText() {
+      return this.$store.state.selectedText;
+    },
+  },
   watch: {
     el() {
-      console.debug(111, this.el);
+      console.debug(111, 'watch: el', this.el);
     },
   },
   methods: {
@@ -62,20 +31,11 @@ export default {
       }
       return str;
     },
-    jumpToByCanvasId(canvasId) {
-      this.$store.dispatch('setM3Param', {
-        key: 'canvasId',
-        value: canvasId,
-      });
+    witness(el) {
+      return this.selectedText.teiData.maps.witness[el.attributes.wit];
     },
-    jumpToByURI(uri) {
-      if (uri.indexOf('//kotenseki.nijl.ac.jp/') !== 0) {
-        const frame = uri.replace(/^.*\/(\d+)/, '$1') - 1;
-        this.$store.dispatch('setM3Param', {
-          key: 'frame',
-          value: frame,
-        });
-      }
+    toggleOlp(event) {
+      this.$refs[event.target.value].toggle(event);
     },
   },
   mounted() {
@@ -88,3 +48,20 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.tategaki {
+  margin: -1rem;
+  text-align: center;
+  writing-mode: vertical-tb;
+  -webkit-writing-mode: vertical-tb;
+  -ms-writing-mode: vertical-tb;
+  writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  -ms-writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+.tei-lem {
+  color: blue;
+}
+</style>

@@ -10,11 +10,12 @@ export default createStore({
     texts: [{
       provider: 'NIJL',
       items: [{
-        title: '十六夜日記',
+        title: '十六夜日記 corrected',
         manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest',
         xmls: [{
           label: '上',
-          uri: 'https://raw.githubusercontent.com/TEI-EAJ/jpn_classical/master/%E2%91%A1%E6%A0%A1%E8%A8%82%E6%9C%AC%E6%96%87%E3%83%87%E3%83%BC%E3%82%BF%E5%9B%BD%E6%96%87%E5%AD%A6%E7%A0%94%E7%A9%B6%E8%B3%87%E6%96%99%E9%A4%A8%E6%89%80%E8%94%B5%E3%80%8E%E5%8D%81%E5%85%AD%E5%A4%9C%E7%89%A9%E8%AA%9E%E3%80%8F%E4%B8%8A%E5%B7%BB.xml',
+          // uri: 'https://raw.githubusercontent.com/TEI-EAJ/jpn_classical/master/%E2%91%A1%E6%A0%A1%E8%A8%82%E6%9C%AC%E6%96%87%E3%83%87%E3%83%BC%E3%82%BF%E5%9B%BD%E6%96%87%E5%AD%A6%E7%A0%94%E7%A9%B6%E8%B3%87%E6%96%99%E9%A4%A8%E6%89%80%E8%94%B5%E3%80%8E%E5%8D%81%E5%85%AD%E5%A4%9C%E7%89%A9%E8%AA%9E%E3%80%8F%E4%B8%8A%E5%B7%BB.xml',
+          uri: 'texts/200003074.xml',
         }, {
           label: '下',
           uri: 'https://raw.githubusercontent.com/TEI-EAJ/jpn_classical/master/%E2%91%A1%E6%A0%A1%E8%A8%82%E6%9C%AC%E6%96%87%E3%83%87%E3%83%BC%E3%82%BF%E5%9B%BD%E6%96%87%E5%AD%A6%E7%A0%94%E7%A9%B6%E8%B3%87%E6%96%99%E9%A4%A8%E6%89%80%E8%94%B5%E3%80%8E%E5%8D%81%E5%85%AD%E5%A4%9C%E7%89%A9%E8%AA%9E%E3%80%8F%E4%B8%8B%E5%B7%BB.xml',
@@ -54,14 +55,14 @@ export default createStore({
       state.selectedText.teiData = teiData;
       console.info('store: setSelectedTextTeiData:', state.selectedText);
     },
-    setm3Param(state, m3Param) {
+    setM3Param(state, m3Param) {
       state.m3Param = m3Param;
-      console.info('store: setm3Param:', m3Param);
+      console.info('store: setM3Param:', m3Param);
     },
   },
   actions: {
-    setm3Param({ commit }, m3Param) {
-      commit('setm3Param', m3Param);
+    setM3Param({ commit }, m3Param) {
+      commit('setM3Param', m3Param);
     },
     setSelectedTextTeiData({ commit }, teiData) {
       commit('setSelectedTextTeiData', teiData);

@@ -87,6 +87,7 @@ export default {
       selectedXMLIndex: null,
       xmlData: {}, // key: xml uri; value: xml2json object
       teiData: {}, // key: xml uri; value: { els: {}, maps: {} },
+      teiElementID: 0,
     };
   },
   computed: {
@@ -122,36 +123,39 @@ export default {
         this.selectedXMLIndex = 0;
       });
     },
+    onTabChanged(event) {
+      this.selectedXMLIndex = event.index;
+    },
     async loadXML() {
       const { uri } = this.selectedText.xmls[this.selectedXMLIndex];
       if (!this.selectedXMLData) {
         try {
           const response = await axios.get(uri);
-          this.xmlData[uri] = xmlJs.xml2js(response.data, {
+          const data = xmlJs.xml2js(response.data, {
             ignoreDeclaration: true,
             ignoreInstruction: true,
             ignoreComment: true,
           });
+          this.xmlJsAddIDs(data);
+          this.xmlData[uri] = data;
           this.teiData[uri] = { els: {}, maps: {} };
           this.xmlJsToMapByTagname(uri, 'witness');
           this.$store.dispatch('setSelectedTextTeiData', this.teiData[uri]);
-          console.log(this.selectedText.teiData);
         } catch (error) {
           console.error('TextViewer: loadXML:', error);
         }
       }
     },
-    onTabChanged(event) {
-      this.selectedXMLIndex = event.index;
-    },
-    xmlJsToText(obj) {
-      return obj.elements.reduce(this.xmlJsToTextWalk, '');
-    },
-    xmlJsToTextWalk(prev, curr) {
-      if (curr.type === 'text') {
-        return `${prev}${curr.text}`;
+    // add ids to each TEI element
+    xmlJsAddIDs(el) {
+      const e0 = el;
+      e0.elementID = this.teiElementID;
+      this.teiElementID += 1;
+      if (e0.elements) {
+        e0.elements.forEach((e1) => {
+          this.xmlJsAddIDs(e1);
+        });
       }
-      return curr.elements.reduce(this.xmlJsToTextWalk, prev);
     },
     // find a element by a tagname
     xmlJsGetObjectByTagname(uri, tagname) {
@@ -171,28 +175,29 @@ export default {
       return this.teiData[uri].els[tagname];
     },
     xmlJsGetObjectsByTagnameInit(uri, tagname) {
-      this.teiData[uri].els[tagname] = [];
-      this.xmlJsGetObjectsByTagnameInitWalk(uri, this.selectedXMLData, tagname);
-    },
-    xmlJsGetObjectsByTagnameInitWalk(uri, obj, tagname) {
-      if (!obj.elements) {
-        return;
-      }
-      obj.elements.forEach((o) => {
-        if (o.name === tagname) {
-          this.teiData[uri].els[tagname].push(o);
-        } else {
-          this.xmlJsGetObjectsByTagnameInitWalk(uri, o, tagname);
+      const r = [];
+      const walk = (obj) => {
+        if (!obj.elements) {
+          return;
         }
-      });
+        obj.elements.forEach((o) => {
+          if (o.name === tagname) {
+            r.push(o);
+          } else {
+            walk(o);
+          }
+        });
+      };
+      walk(this.xmlData[uri]);
+      this.teiData[uri].els[tagname] = r;
     },
     // create a key(#xml:id)-value map by a tagname
     xmlJsToMapByTagname(uri, tagname) {
-      this.teiData[uri].maps[tagname] = {};
+      const map = {};
       this.xmlJsGetObjectsByTagname(uri, tagname).forEach((o) => {
-        this.teiData[uri]
-          .maps[tagname][`#${o.attributes['xml:id']}`] = this.xmlJsToText(o);
+        map[`#${o.attributes['xml:id']}`] = this.xmlJsToText(o);
       });
+      this.teiData[uri].maps[tagname] = map;
     },
     // get prettified json string
     jsonPrettify(obj) {
@@ -205,6 +210,16 @@ export default {
         indentCdata: true,
         indentAttributes: true,
       });
+    },
+    // convert json to string
+    xmlJsToText(obj) {
+      return obj.elements.reduce(this.xmlJsToTextWalk, '');
+    },
+    xmlJsToTextWalk(prev, curr) {
+      if (curr.type === 'text') {
+        return `${prev}${curr.text}`;
+      }
+      return curr.elements.reduce(this.xmlJsToTextWalk, prev);
     },
   },
   mounted() {
@@ -239,22 +254,6 @@ export default {
   writing-mode: vertical-rl;
   -webkit-writing-mode: vertical-rl;
   -ms-writing-mode: vertical-rl;
-  /* text-orientation: upright; */
-}
-
-tei-pb {
-  display: block !important;
-  border: 1px solid black !important;
-  content: "xxx";
-  width: 20px !important;
-  height: 20px !important;
-  background-image: url('/images/tei-logo-sm.png');
-}
-.tei-pb {
-  display: block !important;
-  border: 1px solid black;
-  width: 20px !important;
-  height: 20px !important;
-  background-image: url('/images/tei-logo-sm.png');
+  text-orientation: upright;
 }
 </style>
