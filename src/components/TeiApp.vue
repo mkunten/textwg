@@ -26,7 +26,6 @@
 <script>
 import { defineAsyncComponent } from 'vue';
 import OverlayPanel from 'primevue/overlaypanel';
-// import TeiNodes from '@/components/TeiNodes.vue';
 
 export default {
   name: 'TeiApp',
@@ -64,9 +63,6 @@ export default {
 </script>
 
 <style scoped>
-.tei-lem {
-  text-decoration: underline dotted red;
-}
 .tategaki {
   text-align: left;
   writing-mode: vertical-tb;
@@ -76,5 +72,9 @@ export default {
   -webkit-writing-mode: vertical-rl;
   -ms-writing-mode: vertical-rl;
   text-orientation: upright;
+}
+.tei-lem {
+  text-underline-position: right; /* required in Firefox */
+  text-decoration: underline dotted red;
 }
 </style>

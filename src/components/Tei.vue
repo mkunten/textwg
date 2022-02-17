@@ -1,5 +1,7 @@
 <template>
-  <TeiNodes :el="this.el" :parents="this.parents"></TeiNodes>
+  <div class="tategaki">
+    <TeiNodes :el="this.el" :parents="this.parents"></TeiNodes>
+  </div>
 </template>
 
 <script>
@@ -24,35 +26,23 @@ export default {
       console.debug(111, 'watch: el', this.el);
     },
   },
-  methods: {
-    esc(str) {
-      if (!str) {
-        return '';
-      }
-      return str;
-    },
-    witness(el) {
-      return this.selectedText.teiData.maps.witness[el.attributes.wit];
-    },
-    toggleOlp(event) {
-      this.$refs[event.target.value].toggle(event);
-    },
-  },
   mounted() {
-    if (this.$el !== null && this.parents.length === 0) {
-      const el = this.$el.parentNode.parentNode;
-      if (el.scrollWidth !== 0) {
-        el.scrollLeft = el.scrollWidth;
+    // ??: -1000 size got to be set with 'nextTick' or other...
+    setTimeout(() => {
+      if (this.$el !== null && this.parents.length === 0) {
+        const el = this.$el.parentNode;
+        if (el.scrollWidth !== 0) {
+          el.scrollLeft = el.scrollWidth;
+        }
       }
-    }
+    }, 100);
   },
 };
 </script>
 
 <style scoped>
 .tategaki {
-  margin: -1rem;
-  text-align: center;
+  text-align: left;
   writing-mode: vertical-tb;
   -webkit-writing-mode: vertical-tb;
   -ms-writing-mode: vertical-tb;
@@ -60,8 +50,5 @@ export default {
   -webkit-writing-mode: vertical-rl;
   -ms-writing-mode: vertical-rl;
   text-orientation: upright;
-}
-.tei-lem {
-  color: blue;
 }
 </style>

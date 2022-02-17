@@ -46,11 +46,11 @@
       :key="xml.label" :header="xml.label">
       <ScrollPanel :ref="'sp' + xml.label"
         style="width: 100%; height: 100%;">
-        <div
+        <Tei
           v-if="this.selectedXMLData"
-          class="tategaki">
-          <Tei :el="this.selectedXMLData.elements[0].elements[1]"></Tei>
-        </div>
+          :el="this.selectedXMLData.elements[0].elements[1]"
+        >
+        </Tei>
       </ScrollPanel>
     </TabPanel>
   </TabView>
@@ -243,17 +243,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.tategaki {
-  margin-top: 2rem;
-  text-align: left;
-  writing-mode: vertical-tb;
-  -webkit-writing-mode: vertical-tb;
-  -ms-writing-mode: vertical-tb;
-  writing-mode: vertical-rl;
-  -webkit-writing-mode: vertical-rl;
-  -ms-writing-mode: vertical-rl;
-  text-orientation: upright;
-}
-</style>

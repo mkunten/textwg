@@ -6,7 +6,6 @@ import {
   h,
 } from 'vue';
 import { useStore } from 'vuex';
-// eslint-disable-next-line no-unused-vars
 import TeiApp from '@/components/TeiApp.vue';
 
 export default {
@@ -28,14 +27,12 @@ export default {
     // components
     const mdicon = resolveComponent('mdicon');
     const TeiNodes = resolveComponent('TeiNodes');
-    // const TeiApp = resolveComponent('TeiApp');
 
     // props
     const elRef = toRef(props, 'el');
     const parentsRef = toRef(props, 'parents');
 
     // computed
-    // const selectedText = computed(() => store.state.selectedText);
     const className = computed(() => `tei-${elRef.value.name}`);
 
     // methods
