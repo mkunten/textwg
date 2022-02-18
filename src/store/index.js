@@ -51,10 +51,6 @@ export default createStore({
       state.selectedText = text;
       console.info('store: setSelectedText:', state.selectedText);
     },
-    setSelectedTextTeiData(state, teiData) {
-      state.selectedText.teiData = teiData;
-      console.info('store: setSelectedTextTeiData:', state.selectedText);
-    },
     setM3Param(state, m3Param) {
       state.m3Param = m3Param;
       console.info('store: setM3Param:', m3Param);
@@ -63,9 +59,6 @@ export default createStore({
   actions: {
     setM3Param({ commit }, m3Param) {
       commit('setM3Param', m3Param);
-    },
-    setSelectedTextTeiData({ commit }, teiData) {
-      commit('setSelectedTextTeiData', teiData);
     },
   },
 });

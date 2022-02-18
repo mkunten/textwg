@@ -1,35 +1,85 @@
 <template>
-  <SideBar v-model:visible="visibleRight" position="right"
-    closeButton="ture">
+  <SideBar
+    style="width: 80%"
+    v-model:visible="visibleRight"
+    position="right"
+    closeButton="true"
+  >
     <Accordion multiple :activeIndex="[0,1]" lazy>
-      <AccordionTab header="XML Metadata">
+      <AccordionTab header="TEI nodes viewer">
+        <Card>
+          <template #content>
+            <AutoComplete
+              v-model="tnvFilter"
+              :suggestions="tnvSuggestions"
+              field="name"
+              @complete="tnvSearch"
+              @itemSelect="tnvOnSelected"
+              autoHighlight
+              completeOnFocus
+              forceSelection
+            >
+              <template #item="slotProps">
+                <div>
+                  {{ slotProps.item.name }} ({{ slotProps.item.count }})
+                </div>
+              </template>
+            </AutoComplete>
+            <div style="margin-top: 1rem">
+              <pre v-if="tnvSelected">{{
+                this.jsonPrettify({
+                  type: 'element',
+                  name: 'data',
+                  elements: this.tnvResult,
+                })
+              }}</pre>
+              <span v-else>
+                no data (e.g. <code>witness</code>, <code>app</code>)
+              </span>
+            </div>
+          </template>
+        </Card>
+      </AccordionTab>
+      <AccordionTab header="Metadata">
         <Card>
           <template #title>
-            <span class="text-sm">Label</span>
+            <span class="text-sm">Text</span>
           </template>
           <template #content>
-            <span class="text-sm">{{ this.selectedXML.label }}</span>
+            <div class="text-sm">
+              title: {{ this.selectedText.title }}<br />
+              manifestURI: <a class="text-sm" target="_blank"
+                :href="this.selectedText.manifestURI">
+                {{ this.selectedText.manifestURI }}
+              </a>
+            </div>
           </template>
         </Card>
         <Card>
           <template #title>
-            <span class="text-sm">XML URI</span>
+            <span class="text-sm">TEI/XML</span>
           </template>
           <template #content>
-            <span class="text-sm">
-              <a target="_blank"
+            <div class="text-sm">
+              label: {{ this.selectedXML.label }}<br />
+              uri: <a class="text-sm" target="_blank"
                 :href="this.selectedXML.uri">
-                {{ decodeURIComponent(this.selectedXML.uri) }}
+                {{ this.selectedXML.uri }}
               </a>
-            </span>
+            </div>
           </template>
         </Card>
       </AccordionTab>
       <AccordionTab header="TEI Header">
         <Card>
           <template #content>
-          <pre>{{ this.jsonPrettify(this
-            .xmlJsGetObjectByTagname('teiHeader')) }}</pre>
+          <pre>{{
+            this.jsonPrettify(
+              this.xmlJsGetObjectByTagname(
+                this.selectedXML.uri,
+                'teiHeader',
+              ))
+          }}</pre>
           </template>
         </Card>
       </AccordionTab>
@@ -40,17 +90,21 @@
     <mdicon name="menu" class="absolute right-0"
       @click="this.visibleRight = !this.visibleRight" />
   </div>
-  <TabView ref="tv" v-model:activeIndex="tabActiveIndex"
-    @tab-change="onTabChanged">
-    <TabPanel v-for="xml in selectedText.xmls"
-      :key="xml.label" :header="xml.label">
-      <ScrollPanel :ref="'sp' + xml.label"
+  <TabView
+    v-model:activeIndex="tabActiveIndex"
+    @tab-change="onTabChanged"
+  >
+    <TabPanel
+      v-for="xml in selectedText.xmls"
+      :key="xml.label"
+      :header="xml.label"
+    >
+      <ScrollPanel
         style="width: 100%; height: 100%;">
         <Tei
-          v-if="this.selectedXMLData"
-          :el="this.selectedXMLData.elements[0].elements[1]"
-        >
-        </Tei>
+          v-if="data[xml.uri]"
+          :el="this.data[xml.uri].xml.elements[0].elements[1]"
+        />
       </ScrollPanel>
     </TabPanel>
   </TabView>
@@ -61,6 +115,7 @@ import axios from 'axios';
 import xmlJs from 'xml-js';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import AutoComplete from 'primevue/autocomplete';
 import Card from 'primevue/card';
 import ScrollPanel from 'primevue/scrollpanel';
 import SideBar from 'primevue/sidebar';
@@ -73,6 +128,7 @@ export default {
   components: {
     Accordion,
     AccordionTab,
+    AutoComplete,
     Card,
     SideBar,
     ScrollPanel,
@@ -85,9 +141,10 @@ export default {
       visibleRight: false,
       tabActiveIndex: 0,
       selectedXMLIndex: null,
-      xmlData: {}, // key: xml uri; value: xml2json object
-      teiData: {}, // key: xml uri; value: { els: {}, maps: {} },
-      teiElementID: 0,
+      data: {}, // key: xml uri; value: xml2json object etc.
+      tnvFilter: '',
+      tnvSuggestions: [],
+      tnvSelected: '',
     };
   },
   computed: {
@@ -103,18 +160,19 @@ export default {
       }
       return this.selectedText.xmls[this.selectedXMLIndex];
     },
-    selectedXMLData() {
+    selectedData() {
       if (this.selectedXML === null
-        || this.xmlData[this.selectedXML.uri] === undefined) {
+        || this.data[this.selectedXML.uri] === undefined) {
         return null;
       }
-      return this.xmlData[this.selectedXML.uri];
+      return this.data[this.selectedXML.uri];
+    },
+    tnvResult() {
+      return this.xmlJsGetObjectsByTagname(this.selectedXML.uri,
+        this.tnvSelected);
     },
   },
   methods: {
-    getCanvasById(id) {
-      return this.$store.getters.getCanvasById(id);
-    },
     resetText() {
       this.xmlLoaded = [];
       this.selectedXMLIndex = null;
@@ -128,7 +186,7 @@ export default {
     },
     async loadXML() {
       const { uri } = this.selectedText.xmls[this.selectedXMLIndex];
-      if (!this.selectedXMLData) {
+      if (!this.data[uri]) {
         try {
           const response = await axios.get(uri);
           const data = xmlJs.xml2js(response.data, {
@@ -136,43 +194,62 @@ export default {
             ignoreInstruction: true,
             ignoreComment: true,
           });
-          this.xmlJsAddIDs(data);
-          this.xmlData[uri] = data;
-          this.teiData[uri] = { els: {}, maps: {} };
+          this.data[uri] = this.xmlJsInit(data);
           this.xmlJsToMapByTagname(uri, 'witness');
-          this.$store.dispatch('setSelectedTextTeiData', this.teiData[uri]);
         } catch (error) {
           console.error('TextViewer: loadXML:', error);
         }
       }
     },
-    // add ids to each TEI element
-    xmlJsAddIDs(el) {
-      const e0 = el;
-      e0.elementID = this.teiElementID;
-      this.teiElementID += 1;
-      if (e0.elements) {
-        e0.elements.forEach((e1) => {
-          this.xmlJsAddIDs(e1);
-        });
-      }
+    // initialize a TEI object and create list of element names
+    xmlJsInit(obj) {
+      let id = 0;
+      const map = {};
+      const walk = (obj0) => {
+        const obj1 = obj0;
+        obj1.elementID = id;
+        id += 1;
+        if (obj1.name) {
+          if (!map[obj1.name]) {
+            map[obj1.name] = 1;
+          } else {
+            map[obj1.name] += 1;
+          }
+        }
+        if (obj1.elements) {
+          obj1.elements.forEach((obj2) => {
+            walk(obj2);
+          });
+        }
+      };
+      walk(obj);
+
+      const list = Object.keys(map).sort().map((name) => ({
+        name,
+        count: map[name],
+      }));
+
+      return {
+        xml: obj,
+        tei: { list, els: {}, maps: {} },
+      };
     },
     // find a element by a tagname
     xmlJsGetObjectByTagname(uri, tagname) {
-      if (this.teiData[uri].els[tagname] === undefined) {
+      if (this.data[uri].tei.els[tagname] === undefined) {
         this.xmlJsGetObjectsByTagnameInit(uri, tagname);
       }
-      if (this.teiData[uri].els[tagname].length > 0) {
-        return this.teiData[uri].els[tagname][0];
+      if (this.data[uri].tei.els[tagname].length > 0) {
+        return this.data[uri].tei.els[tagname][0];
       }
       return null;
     },
     // find elements by a tagname
     xmlJsGetObjectsByTagname(uri, tagname) {
-      if (this.teiData[uri].els[tagname] === undefined) {
+      if (this.data[uri].tei.els[tagname] === undefined) {
         this.xmlJsGetObjectsByTagnameInit(uri, tagname);
       }
-      return this.teiData[uri].els[tagname];
+      return this.data[uri].tei.els[tagname];
     },
     xmlJsGetObjectsByTagnameInit(uri, tagname) {
       const r = [];
@@ -188,8 +265,8 @@ export default {
           }
         });
       };
-      walk(this.xmlData[uri]);
-      this.teiData[uri].els[tagname] = r;
+      walk(this.data[uri].xml);
+      this.data[uri].tei.els[tagname] = r;
     },
     // create a key(#xml:id)-value map by a tagname
     xmlJsToMapByTagname(uri, tagname) {
@@ -197,7 +274,7 @@ export default {
       this.xmlJsGetObjectsByTagname(uri, tagname).forEach((o) => {
         map[`#${o.attributes['xml:id']}`] = this.xmlJsToText(o);
       });
-      this.teiData[uri].maps[tagname] = map;
+      this.data[uri].tei.maps[tagname] = map;
     },
     // get prettified json string
     jsonPrettify(obj) {
@@ -221,9 +298,23 @@ export default {
       }
       return curr.elements.reduce(this.xmlJsToTextWalk, prev);
     },
-  },
-  mounted() {
-    // this.initCETEIcean();
+    // tnvSearch
+    tnvSearch(event) {
+      setTimeout(() => {
+        if (this.selectedXML === null
+          || this.data[this.selectedXML.uri] === undefined) {
+          return null;
+        }
+        this.tnvSuggestions = this.selectedData.tei.list.filter((item) => (
+          item.name.startsWith(event.query)
+        ));
+        return true;
+      }, 250);
+    },
+    // tnvOnSelected
+    tnvOnSelected(event) {
+      this.tnvSelected = event.value.name;
+    },
   },
   watch: {
     selectedText: {

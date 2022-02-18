@@ -8,7 +8,6 @@ import mdiVue from 'mdi-vue/v3';
 import * as mdijs from '@mdi/js';
 import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
 import 'primevue/resources/themes/mdc-light-indigo/theme.css';
 import 'primevue/resources/primevue.min.css';
@@ -26,6 +25,5 @@ createApp(App)
   .use(mdiVue, { icons: mdijs })
   .use(PrimeVue, { locale: ja })
   .component('Button', Button)
-  .component('InputText', InputText)
   .component('SelectButton', SelectButton)
   .mount('#app');
