@@ -10,8 +10,10 @@
   </span>
   <OverlayPanel ref="op">
     <div class="tategaki">
-      {{ this.formatLabel(this.lem.attributes.wit) }}
-      <TeiNodes :el="this.lem" :parents="this.childParents"></TeiNodes>
+      <div>
+        {{ this.formatLabel(this.lem.attributes.wit) }}
+        <TeiNodes :el="this.lem" :parents="this.childParents"></TeiNodes>
+      </div>
       <div
         v-for="el in this.rdgs"
         :key="el.elementID"
@@ -57,6 +59,12 @@ export default {
     },
     toggleOlp(event) {
       this.$refs.op.toggle(event);
+      // firefox bug of width-culcuration timing?
+      if (window.navigator.userAgent.startsWith('Mozilla')) {
+        this.$nextTick(() => {
+          this.$refs.op.container.style.boxSizing = 'content-box';
+        });
+      }
     },
   },
 };
