@@ -1,9 +1,9 @@
 <script>
 import {
   resolveComponent,
-  computed,
   toRef,
   h,
+  useCssModule,
 } from 'vue';
 import { useStore } from 'vuex';
 import TeiApp from '@/components/TeiApp.vue';
@@ -24,6 +24,9 @@ export default {
     // store
     const store = useStore();
 
+    // style
+    const style = useCssModule();
+
     // components
     const mdicon = resolveComponent('mdicon');
     const TeiNodes = resolveComponent('TeiNodes');
@@ -33,7 +36,6 @@ export default {
     const parentsRef = toRef(props, 'parents');
 
     // computed
-    const className = computed(() => `tei-${elRef.value.name}`);
 
     // methods
     const renderChild = (el) => h(
@@ -61,6 +63,8 @@ export default {
       }
     };
 
+    const getClassName = () => style[`tei-${elRef.value.name}`];
+
     // render
     let vnodes = null;
 
@@ -76,16 +80,19 @@ export default {
             if (elRef.value.attributes.n) {
               vnodes = h(
                 'span',
-                { class: className },
+                { class: getClassName() },
                 `【${elRef.value.attributes.n}】`,
               );
             }
             if (elRef.value.attributes.facs) {
-              vnodes = [
+              const a = [h('br')];
+              if (vnodes) {
+                a.push(vnodes);
+              }
+              a.push([
                 h(
                   'a',
                   {
-                    class: className,
                     target: '_blank',
                     title: '外部サイトを開く',
                     href: elRef.value.attributes.facs,
@@ -102,11 +109,12 @@ export default {
                     },
                   },
                 ),
-              ];
+              ]);
+              vnodes = a;
             }
             break;
           case 'lb':
-            vnodes = h('br', { class: className });
+            vnodes = h('br', { class: getClassName() });
             break;
           case 'graphic':
             if (elRef.value.attributes.n) {
@@ -152,3 +160,9 @@ export default {
   },
 };
 </script>
+
+<style module>
+.tei-pb {
+  color: grey;
+}
+</style>

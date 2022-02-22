@@ -4,22 +4,24 @@
     title="異読"
     :lem="lem"
     @click.prevent="toggleOlp"
-  >
-    <mdicon name="information-outline" size="18"></mdicon>
-    <TeiNodes :el="this.lem" :parents="this.childParents"></TeiNodes>
-  </span>
-  <OverlayPanel ref="op">
+  ><mdicon
+    name="information-outline" size="18"
+  /><TeiNodes
+    :el="this.lem" :parents="this.childParents"
+  /></span><OverlayPanel ref="op">
     <div class="tategaki">
       <div>
-        {{ this.formatLabel(this.lem.attributes.wit) }}
-        <TeiNodes :el="this.lem" :parents="this.childParents"></TeiNodes>
+        {{
+          this.formatLabel(this.lem.attributes.wit)
+        }}<TeiNodes :el="this.lem" :parents="this.childParents" />
       </div>
       <div
         v-for="el in this.rdgs"
         :key="el.elementID"
       >
-        {{ this.formatLabel(el.attributes.wit) }}
-        <TeiNodes :el="el" :parents="this.childParents"></TeiNodes>
+        {{
+          this.formatLabel(el.attributes.wit)
+        }}<TeiNodes :el="el" :parents="this.childParents" />
       </div>
     </div>
   </OverlayPanel>

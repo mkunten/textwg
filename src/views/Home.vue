@@ -1,5 +1,5 @@
 <template>
-  <p class="fixed top-0 right-0">20220218001</p>
+  <p class="fixed top-0 right-0">20220222001</p>
   <ImageViewer />
 </template>
 

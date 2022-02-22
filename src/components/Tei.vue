@@ -1,6 +1,6 @@
 <template>
   <div class="tategaki">
-    <TeiNodes :el="this.el" :parents="this.parents"></TeiNodes>
+    <TeiNodes :el="this.el" :parents="this.parents" />
   </div>
 </template>
 
