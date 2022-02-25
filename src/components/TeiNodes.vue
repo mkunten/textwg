@@ -31,11 +31,18 @@ export default {
     const mdicon = resolveComponent('mdicon');
     const TeiNodes = resolveComponent('TeiNodes');
 
+    // enum
+    const URI_TYPE = {
+      RAW_IMAGE: 'raw_image',
+      IIIF_IMAGE: 'IIIF_image',
+      CANVAS_ID: 'canvasId',
+      KOTENSEKI_NIJL: 'kotenseki_nijl',
+      OHTER: 'other',
+    };
+
     // props
     const elRef = toRef(props, 'el');
     const parentsRef = toRef(props, 'parents');
-
-    // computed
 
     // methods
     const renderChild = (el) => h(
@@ -46,6 +53,26 @@ export default {
       },
     );
 
+    const descernURI = (uri) => {
+      if (/\.(jpg|png|tiff?)$/i.test(uri)) {
+        return { type: URI_TYPE.RAW_IMAGE };
+      }
+      if (/\.(jpg|png|tiff?)\/.*?\/.*?\/.*?\/.*\.(jpg|png|tiff?)$/i
+        .test(uri)) {
+        return { type: URI_TYPE.IIIF_IMAGE };
+      }
+      if (/\/canvas\/.*?$/.test(uri)) {
+        return { type: URI_TYPE.CANVAS_ID };
+      }
+      if (/\/\/kotenseki.nijl.ac.jp\/biblio\/\d+\/viewer\/(\d+)$/.test(uri)) {
+        return {
+          type: URI_TYPE.KOTENSEKI_NIJL,
+          frame: parseInt(RegExp.$1, 10) - 1,
+        };
+      }
+      return { type: URI_TYPE.OTHER };
+    };
+
     const jumpToByCanvasId = (canvasId) => {
       store.dispatch('setM3Param', {
         key: 'canvasId',
@@ -53,13 +80,78 @@ export default {
       });
     };
 
-    const jumpToByFacs = (facs) => {
-      if (/\/\/kotenseki.nijl.ac.jp\/biblio\/\d+\/viewer\/(\d+)/.test(facs)) {
-        const frame = parseInt(RegExp.$1, 10) - 1;
-        store.dispatch('setM3Param', {
-          key: 'frame',
-          value: frame,
-        });
+    const jumpToByFrame = (frame) => {
+      store.dispatch('setM3Param', {
+        key: 'frame',
+        value: frame,
+      });
+    };
+
+    const createVNodeByURI = (uri) => {
+      const r = descernURI(uri);
+      switch (r.type) {
+        case URI_TYPE.CANVAS_ID: {
+          return h(
+            mdicon,
+            {
+              name: 'book-open-page-variant-outline',
+              title: 'ビューワ上で移動',
+              onClick: (e) => {
+                jumpToByCanvasId(elRef.value.attributes.n);
+                e.preventDefault();
+              },
+            },
+          );
+        }
+        case URI_TYPE.KOTENSEKI_NIJL: {
+          return [
+            h(
+              'a',
+              {
+                target: '_blank',
+                title: '外部サイトを開く',
+                href: elRef.value.attributes.facs,
+              },
+              h(mdicon, { name: 'open-in-new' }),
+            ), h(
+              mdicon,
+              {
+                name: 'book-open-page-variant-outline',
+                title: 'ビューア上で移動',
+                onClick: (e) => {
+                  jumpToByFrame(r.frame);
+                  e.preventDefault();
+                },
+              },
+            ),
+          ];
+        }
+        case URI_TYPE.RAW_IMAGE:
+        case URI_TYPE.IIIF_IMAGE: {
+          return h(
+            'a',
+            {
+              target: '_blank',
+              title: '画像を開く',
+              href: elRef.value.attributes.facs,
+            },
+            h(mdicon, { name: 'file-image-outline' }),
+          );
+        }
+        case URI_TYPE.OTHER: {
+          return h(
+            'a',
+            {
+              target: '_blank',
+              title: '外部サイトを開く',
+              href: elRef.value.attributes.facs,
+            },
+            h(mdicon, { name: 'open-in-new' }),
+          );
+        }
+        default: {
+          return null;
+        }
       }
     };
 
@@ -89,27 +181,10 @@ export default {
               if (vnodes) {
                 a.push(vnodes);
               }
-              a.push([
-                h(
-                  'a',
-                  {
-                    target: '_blank',
-                    title: '外部サイトを開く',
-                    href: elRef.value.attributes.facs,
-                  },
-                  h(mdicon, { name: 'open-in-new' }),
-                ), h(
-                  mdicon,
-                  {
-                    name: 'book-open-page-variant-outline',
-                    title: 'ビューア上で移動',
-                    onClick: (e) => {
-                      jumpToByFacs(elRef.value.attributes.facs);
-                      e.preventDefault();
-                    },
-                  },
-                ),
-              ]);
+              const n = createVNodeByURI(elRef.value.attributes.facs);
+              if (n) {
+                a.push(n);
+              }
               vnodes = a;
             }
             break;
@@ -118,17 +193,7 @@ export default {
             break;
           case 'graphic':
             if (elRef.value.attributes.n) {
-              vnodes = h(
-                mdicon,
-                {
-                  name: 'book-open-page-variant-outline',
-                  title: 'ビューワ上で移動',
-                  onClick: (e) => {
-                    jumpToByCanvasId(elRef.value.attributes.n);
-                    e.preventDefault();
-                  },
-                },
-              );
+              vnodes = createVNodeByURI(elRef.value.attributes.n);
             }
             break;
           case 'app':

@@ -18,10 +18,14 @@
               autoHighlight
               completeOnFocus
               forceSelection
+              placeholder="input tag name or #xml:id"
             >
               <template #item="slotProps">
                 <div>
-                  {{ slotProps.item.name }} ({{ slotProps.item.count }})
+                  {{ slotProps.item.name }}
+                  <template v-if="slotProps.item.count">
+                    ({{ slotProps.item.count }})
+                  </template>
                 </div>
               </template>
             </AutoComplete>
@@ -73,13 +77,13 @@
       <AccordionTab header="TEI Header">
         <Card>
           <template #content>
-          <pre>{{
-            this.jsonPrettify(
-              this.xmlJsGetObjectByTagname(
-                this.selectedXML.uri,
-                'teiHeader',
-              ))
-          }}</pre>
+            <pre>{{
+              this.jsonPrettify(
+                this.xmlJsGetObjectByTagname(
+                  this.selectedXML.uri,
+                  'teiHeader',
+                ))
+            }}</pre>
           </template>
         </Card>
       </AccordionTab>
@@ -125,6 +129,7 @@ import Tei from '@/components/Tei.vue';
 
 export default {
   name: 'TextViewer',
+
   components: {
     Accordion,
     AccordionTab,
@@ -136,6 +141,7 @@ export default {
     TabView,
     Tei,
   },
+
   data() {
     return {
       visibleRight: false,
@@ -147,6 +153,7 @@ export default {
       tnvSelected: '',
     };
   },
+
   computed: {
     m3() {
       return this.$store.state.m3;
@@ -167,11 +174,38 @@ export default {
       }
       return this.data[this.selectedXML.uri];
     },
+    tnvSuggestionsAll() {
+      return this.selectedData.tei.list
+        .concat(Object.keys(this.selectedData.tei.xmlIDs)
+          .map((name) => ({ name })));
+    },
     tnvResult() {
+      if (this.tnvSelected.startsWith('#')) {
+        console.log(this.selectedData.tei.xmlIDs[this.tnvSelected]);
+        return [this.selectedData.tei.xmlIDs[this.tnvSelected]];
+      }
       return this.xmlJsGetObjectsByTagname(this.selectedXML.uri,
         this.tnvSelected);
     },
   },
+
+  watch: {
+    selectedText: {
+      handler() {
+        this.resetText();
+      },
+      deep: true,
+    },
+    selectedXMLIndex: {
+      handler(idx) {
+        if (idx !== null) {
+          this.loadXML();
+        }
+      },
+      deep: true,
+    },
+  },
+
   methods: {
     resetText() {
       this.xmlLoaded = [];
@@ -195,7 +229,6 @@ export default {
             ignoreComment: true,
           });
           this.data[uri] = this.xmlJsInit(data);
-          this.xmlJsToMapByTagname(uri, 'witness');
         } catch (error) {
           console.error('TextViewer: loadXML:', error);
         }
@@ -205,10 +238,10 @@ export default {
     xmlJsInit(obj) {
       let id = 0;
       const map = {};
+      const xmlIDs = {};
       const walk = (obj0) => {
         const obj1 = obj0;
         obj1.elementID = id;
-        id += 1;
         if (obj1.name) {
           if (!map[obj1.name]) {
             map[obj1.name] = 1;
@@ -216,6 +249,10 @@ export default {
             map[obj1.name] += 1;
           }
         }
+        if (obj1.attributes && obj1.attributes['xml:id']) {
+          xmlIDs[`#${obj1.attributes['xml:id']}`] = obj1;
+        }
+        id += 1;
         if (obj1.elements) {
           obj1.elements.forEach((obj2) => {
             walk(obj2);
@@ -229,9 +266,11 @@ export default {
         count: map[name],
       }));
 
+      console.info('tag list:', list, map, 'xml:id', xmlIDs);
+
       return {
         xml: obj,
-        tei: { list, els: {}, maps: {} },
+        tei: { list, xmlIDs, els: {} },
       };
     },
     // find a element by a tagname
@@ -268,14 +307,6 @@ export default {
       walk(this.data[uri].xml);
       this.data[uri].tei.els[tagname] = r;
     },
-    // create a key(#xml:id)-value map by a tagname
-    xmlJsToMapByTagname(uri, tagname) {
-      const map = {};
-      this.xmlJsGetObjectsByTagname(uri, tagname).forEach((o) => {
-        map[`#${o.attributes['xml:id']}`] = this.xmlJsToText(o);
-      });
-      this.data[uri].tei.maps[tagname] = map;
-    },
     // get prettified json string
     jsonPrettify(obj) {
       if (!obj) {
@@ -305,7 +336,7 @@ export default {
           || this.data[this.selectedXML.uri] === undefined) {
           return null;
         }
-        this.tnvSuggestions = this.selectedData.tei.list.filter((item) => (
+        this.tnvSuggestions = this.tnvSuggestionsAll.filter((item) => (
           item.name.startsWith(event.query)
         ));
         return true;
@@ -314,22 +345,6 @@ export default {
     // tnvOnSelected
     tnvOnSelected(event) {
       this.tnvSelected = event.value.name;
-    },
-  },
-  watch: {
-    selectedText: {
-      handler() {
-        this.resetText();
-      },
-      deep: true,
-    },
-    selectedXMLIndex: {
-      handler(idx) {
-        if (idx !== null) {
-          this.loadXML();
-        }
-      },
-      deep: true,
     },
   },
 };
