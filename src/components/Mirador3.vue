@@ -59,9 +59,9 @@ export default {
       this.m3.store.dispatch(window.Mirador.actions
         .setCanvas(windowId, id));
     },
-    setM3CanvasByFrame(frame, windowId = 'windowDefault') {
+    setM3CanvasBySeqIdx(seqIdx, windowId = 'windowDefault') {
       this.setM3CanvasById(this.getM3ManifestJSON(windowId)
-        .sequences[0].canvases[frame]['@id']);
+        .sequences[0].canvases[seqIdx]['@id']);
     },
   },
   mounted() {
@@ -77,8 +77,8 @@ export default {
     m3Param: {
       handler(m3Param) {
         switch (m3Param.key) {
-          case 'frame':
-            this.setM3CanvasByFrame(m3Param.value);
+          case 'seqIdx':
+            this.setM3CanvasBySeqIdx(m3Param.value);
             break;
           case 'canvasId':
             this.setM3CanvasById(m3Param.value);

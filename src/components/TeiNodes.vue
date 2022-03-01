@@ -2,6 +2,7 @@
 import {
   resolveComponent,
   toRef,
+  inject,
   h,
   useCssModule,
 } from 'vue';
@@ -44,6 +45,9 @@ export default {
     const elRef = toRef(props, 'el');
     const parentsRef = toRef(props, 'parents');
 
+    // inject
+    const getXMLIDs = inject('getXMLIDs');
+
     // methods
     const renderChild = (el) => h(
       TeiNodes,
@@ -54,21 +58,37 @@ export default {
     );
 
     const descernURI = (uri) => {
-      if (/\.(jpg|png|tiff?)$/i.test(uri)) {
-        return { type: URI_TYPE.RAW_IMAGE };
-      }
       if (/\.(jpg|png|tiff?)\/.*?\/.*?\/.*?\/.*\.(jpg|png|tiff?)$/i
         .test(uri)) {
         return { type: URI_TYPE.IIIF_IMAGE };
       }
+      if (/\.(jpg|png|tiff?)$/i.test(uri)) {
+        return { type: URI_TYPE.RAW_IMAGE };
+      }
       if (/\/canvas\/.*?$/.test(uri)) {
         return { type: URI_TYPE.CANVAS_ID };
       }
-      if (/\/\/kotenseki.nijl.ac.jp\/biblio\/\d+\/viewer\/(\d+)$/.test(uri)) {
+      if (/\/\/kotenseki\.nijl\.ac\.jp\/biblio\/\d+\/viewer\/(\d+)$/.test(uri)) {
         return {
           type: URI_TYPE.KOTENSEKI_NIJL,
-          frame: parseInt(RegExp.$1, 10) - 1,
+          seqIdx: parseInt(RegExp.$1, 10) - 1,
         };
+      }
+      if (/\/\/www\.iiif\.ku-orcas\.kansai-u\.ac\.jp\/iiif\/.*\/page(\d+)$/.test(uri)) {
+        const n = parseInt(RegExp.$1, 10);
+        // maybe a mistake in encoding TEI/XML
+        if (n >= 2805960) {
+          const s = `0000${n - 2805916}`.slice(-4);
+          console.log({
+            type: URI_TYPE.CANVAS_ID,
+            canvasId: uri.replace(/\d+$/, s),
+          });
+          return {
+            type: URI_TYPE.CANVAS_ID,
+            canvasId: uri.replace(/\d+$/, s),
+          };
+        }
+        return { type: URI_TYPE.CANVAS_ID };
       }
       return { type: URI_TYPE.OTHER };
     };
@@ -80,10 +100,10 @@ export default {
       });
     };
 
-    const jumpToByFrame = (frame) => {
+    const jumpToBySeqIdx = (seqIdx) => {
       store.dispatch('setM3Param', {
-        key: 'frame',
-        value: frame,
+        key: 'seqIdx',
+        value: seqIdx,
       });
     };
 
@@ -97,7 +117,7 @@ export default {
               name: 'book-open-page-variant-outline',
               title: 'ビューワ上で移動',
               onClick: (e) => {
-                jumpToByCanvasId(elRef.value.attributes.n);
+                jumpToByCanvasId(r.canvasId || elRef.value.attributes.n);
                 e.preventDefault();
               },
             },
@@ -119,7 +139,7 @@ export default {
                 name: 'book-open-page-variant-outline',
                 title: 'ビューア上で移動',
                 onClick: (e) => {
-                  jumpToByFrame(r.frame);
+                  jumpToBySeqIdx(r.seqIdx);
                   e.preventDefault();
                 },
               },
@@ -169,23 +189,28 @@ export default {
       case 'element':
         switch (elRef.value.name) {
           case 'pb':
+            vnodes = [h('br')];
             if (elRef.value.attributes.n) {
-              vnodes = h(
+              vnodes.push(h(
                 'span',
                 { class: getClassName() },
                 `【${elRef.value.attributes.n}】`,
-              );
+              ));
             }
             if (elRef.value.attributes.facs) {
-              const a = [h('br')];
-              if (vnodes) {
-                a.push(vnodes);
-              }
               const n = createVNodeByURI(elRef.value.attributes.facs);
               if (n) {
-                a.push(n);
+                vnodes.push(n);
               }
-              vnodes = a;
+            }
+            if (elRef.value.attributes.source) {
+              const source = getXMLIDs()[elRef.value.attributes.source];
+              if (source) {
+                const n = createVNodeByURI(source.attributes.source);
+                if (n) {
+                  vnodes.push(n);
+                }
+              }
             }
             break;
           case 'lb':

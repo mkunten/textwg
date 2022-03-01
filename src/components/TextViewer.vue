@@ -206,6 +206,12 @@ export default {
     },
   },
 
+  provide() {
+    return {
+      getXMLIDs: () => this.selectedData.tei.xmlIDs,
+    };
+  },
+
   methods: {
     resetText() {
       this.xmlLoaded = [];
