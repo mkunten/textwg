@@ -3,6 +3,9 @@
 </template>
 
 <script>
+import Mirador from 'mirador/dist/es/src/index';
+import { miradorImageToolsPlugin } from 'mirador-image-tools';
+
 export default {
   name: 'Mirador3',
   props: [
@@ -35,28 +38,31 @@ export default {
       return state.manifests[state.windows[windowId].manifestId].json;
     },
     initM3() {
-      const m3 = window.Mirador.viewer({
+      const m3 = Mirador.viewer({
         language: 'ja',
         id: this.miradorId,
         window: {
           sideBarOpenByDefault: false,
         },
-      });
+      }, [
+        ...miradorImageToolsPlugin,
+      ]);
+
       this.$store.commit('setM3', m3);
-      window.m3 = m3; // for debugging
+      window.m3 = m3; // debug
     },
     setM3Text(text, windowId = 'windowDefault') {
       if (this.getM3Window(windowId) !== null) {
-        this.m3.store.dispatch(window.Mirador.actions
+        this.m3.store.dispatch(Mirador.actions
           .addWindow({ id: windowId, manifestId: text.manifestURI }));
       } else {
         console.info('m3 update');
-        this.m3.store.dispatch(window.Mirador.actions
+        this.m3.store.dispatch(Mirador.actions
           .updateWindow(windowId, { manifestId: text.manifestURI }));
       }
     },
     setM3CanvasById(id, windowId = 'windowDefault') {
-      this.m3.store.dispatch(window.Mirador.actions
+      this.m3.store.dispatch(Mirador.actions
         .setCanvas(windowId, id));
     },
     setM3CanvasBySeqIdx(seqIdx, windowId = 'windowDefault') {
@@ -66,6 +72,9 @@ export default {
   },
   mounted() {
     this.initM3();
+  },
+  beforeUnmount() {
+    this.m3.unmount();
   },
   watch: {
     selectedText: {

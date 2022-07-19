@@ -8,7 +8,7 @@ export default createStore({
     selectedText: {},
     m3Param: {},
     texts: [{
-      provider: 'NIJL',
+      provider: 'TEI-EAJ',
       items: [{
         title: '十六夜日記 corrected',
         manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest',
