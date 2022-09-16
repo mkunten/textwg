@@ -11,7 +11,7 @@
     "@blueprintjs/core": "^4.3.1",
     "@blueprintjs/icons": "^4.2.5",
     "@mdi/js": "^6.5.95",
-    "axios": "^0.24.0",
+    "axios": "^0.27.2",
     "core-js": "^3.6.5",
     "mdi-vue": "^3.0.12",
     "mirador": "^3.3.0",

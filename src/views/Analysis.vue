@@ -1,14 +1,10 @@
 <template>
-  <TextAnalysis/>
+  <h2>analysis</h2>
+  <router-view></router-view>
 </template>
 
 <script>
-import TextAnalysis from '@/components/TextAnalysis.vue';
-
 export default {
   name: 'Analysis',
-  components: {
-    TextAnalysis,
-  },
 };
 </script>

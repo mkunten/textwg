@@ -51,12 +51,27 @@ export default createStore({
       state.selectedText = text;
       console.info('store: setSelectedText:', state.selectedText);
     },
+    setSelectedTextByOrd(state, ord) { // ord: 1, 2, 3, ...
+      let n = ord - 1;
+      for (let i = 0; i < state.texts.length; i += 1) {
+        if (n < state.texts[i].items.length) {
+          state.selectedText = state.texts[i].items[n];
+          console.info('store: setSelectedTextByOrd: ', state.selectedText);
+          break;
+        } else {
+          n -= state.texts[i].items.length;
+        }
+      }
+    },
     setM3Param(state, m3Param) {
       state.m3Param = m3Param;
       console.info('store: setM3Param:', m3Param);
     },
   },
   actions: {
+    setSelectedTextByOrd({ commit }, ord) {
+      commit('setSelectedTextByOrd', ord);
+    },
     setM3Param({ commit }, m3Param) {
       commit('setM3Param', m3Param);
     },

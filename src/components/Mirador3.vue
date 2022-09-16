@@ -5,6 +5,7 @@
 <script>
 import Mirador from 'mirador/dist/es/src/index';
 import { miradorImageToolsPlugin } from 'mirador-image-tools';
+import ReactDOM from 'react-dom';
 
 export default {
   name: 'Mirador3',
@@ -38,18 +39,27 @@ export default {
       return state.manifests[state.windows[windowId].manifestId].json;
     },
     initM3() {
-      const m3 = Mirador.viewer({
-        language: 'ja',
-        id: this.miradorId,
-        window: {
-          sideBarOpenByDefault: false,
-        },
-      }, [
-        ...miradorImageToolsPlugin,
-      ]);
+      console.log('initM3');
+      if (this.m3) {
+        console.log('rerender m3');
+        ReactDOM.render(
+          this.m3.render(),
+          document.getElementById(this.miradorId),
+        );
+      } else {
+        const m3 = Mirador.viewer({
+          language: 'ja',
+          id: this.miradorId,
+          window: {
+            sideBarOpenByDefault: false,
+          },
+        }, [
+          ...miradorImageToolsPlugin,
+        ]);
 
-      this.$store.commit('setM3', m3);
-      window.m3 = m3; // debug
+        this.$store.commit('setM3', m3);
+        window.m3 = m3; // debug
+      }
     },
     setM3Text(text, windowId = 'windowDefault') {
       if (this.getM3Window(windowId) !== null) {
@@ -71,9 +81,11 @@ export default {
     },
   },
   mounted() {
+    console.log('m3: mounted');
     this.initM3();
   },
   beforeUnmount() {
+    console.log('m3: unmount');
     this.m3.unmount();
   },
   watch: {

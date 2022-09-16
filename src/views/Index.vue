@@ -33,6 +33,10 @@ export default {
       version: '20220803',
       items: [
         {
+          label: 'files',
+          to: '/files',
+        },
+        {
           label: 'viewer',
           to: '/viewer',
         },

@@ -9,6 +9,7 @@ import * as mdijs from '@mdi/js';
 import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
+import ToastService from 'primevue/toastservice';
 import 'primevue/resources/themes/mdc-light-indigo/theme.css';
 import 'primevue/resources/primevue.min.css';
 import 'primeicons/primeicons.css';
@@ -24,6 +25,7 @@ createApp(App)
   .use(router)
   .use(mdiVue, { icons: mdijs })
   .use(PrimeVue, { locale: ja })
+  .use(ToastService)
   .component('Button', Button)
   .component('SelectButton', SelectButton)
   .mount('#app');

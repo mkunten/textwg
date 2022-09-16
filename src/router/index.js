@@ -13,6 +13,11 @@ const routes = [
         component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue'),
       },
       {
+        path: 'files',
+        name: 'Files',
+        component: () => import(/* webpackChunkName: "files" */ '../views/Files.vue'),
+      },
+      {
         path: 'viewer',
         name: 'Viewer',
         component: () => import(/* webpackChunkName: "viewer" */ '../views/Viewer.vue'),
@@ -21,6 +26,13 @@ const routes = [
         path: 'analysis',
         name: 'Analysis',
         component: () => import(/* webpackChunkName: "analysis" */ '../views/Analysis.vue'),
+        children: [
+          {
+            path: 'mecab',
+            name: 'Mecab',
+            component: () => import(/* webpackChunkName: "mecab" */ '../components/Mecab.vue'),
+          },
+        ],
       },
     ],
   },
