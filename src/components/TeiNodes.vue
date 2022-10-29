@@ -2,6 +2,7 @@
 import {
   resolveComponent,
   toRef,
+  // computed,
   inject,
   h,
   useCssModule,
@@ -37,6 +38,7 @@ export default {
       RAW_IMAGE: 'raw_image',
       IIIF_IMAGE: 'IIIF_image',
       CANVAS_ID: 'canvasId',
+      SOURCE: 'source',
       KOTENSEKI_NIJL: 'kotenseki_nijl',
       OHTER: 'other',
     };
@@ -44,6 +46,9 @@ export default {
     // props
     const elRef = toRef(props, 'el');
     const parentsRef = toRef(props, 'parents');
+
+    // // computed
+    // const selectedText = computed(() => store.state.selectedText);
 
     // inject
     const getXMLIDs = inject('getXMLIDs');
@@ -66,7 +71,10 @@ export default {
         return { type: URI_TYPE.RAW_IMAGE };
       }
       if (/\/canvas\/.*?$/.test(uri)) {
-        return { type: URI_TYPE.CANVAS_ID };
+        return {
+          type: URI_TYPE.CANVAS_ID,
+          canvasId: uri,
+        };
       }
       if (/\/\/kotenseki\.nijl\.ac\.jp\/biblio\/\d+\/viewer\/(\d+)$/.test(uri)) {
         return {
@@ -79,10 +87,10 @@ export default {
         // maybe a mistake in encoding TEI/XML
         if (n >= 2805960) {
           const s = `0000${n - 2805916}`.slice(-4);
-          console.log({
-            type: URI_TYPE.CANVAS_ID,
-            canvasId: uri.replace(/\d+$/, s),
-          });
+          // console.log({
+          //   type: URI_TYPE.CANVAS_ID,
+          //   canvasId: uri.replace(/\d+$/, s),
+          // });
           return {
             type: URI_TYPE.CANVAS_ID,
             canvasId: uri.replace(/\d+$/, s),
@@ -93,17 +101,19 @@ export default {
       return { type: URI_TYPE.OTHER };
     };
 
-    const jumpToByCanvasId = (canvasId) => {
+    const jumpToByCanvasId = (canvasId, windowId = 'windowDefault') => {
       store.dispatch('setM3Param', {
         key: 'canvasId',
         value: canvasId,
+        windowId,
       });
     };
 
-    const jumpToBySeqIdx = (seqIdx) => {
+    const jumpToBySeqIdx = (seqIdx, windowId = 'windowDefault') => {
       store.dispatch('setM3Param', {
         key: 'seqIdx',
         value: seqIdx,
+        windowId,
       });
     };
 
@@ -116,8 +126,13 @@ export default {
             {
               name: 'book-open-page-variant-outline',
               title: 'ビューワ上で移動',
+              'data-type': 'pb',
+              'data-edref': elRef.value.attributes.edRef,
+              'data-n': elRef.value.attributes.n,
+              'data-canvasid': r.canvasId || elRef.value.attributes.n,
               onClick: (e) => {
-                jumpToByCanvasId(r.canvasId || elRef.value.attributes.n);
+                jumpToByCanvasId(r.canvasId || elRef.value.attributes.n,
+                  elRef.value.attributes.edRef || 'windowDefault');
                 e.preventDefault();
               },
             },
@@ -139,7 +154,7 @@ export default {
                 name: 'book-open-page-variant-outline',
                 title: 'ビューア上で移動',
                 onClick: (e) => {
-                  jumpToBySeqIdx(r.seqIdx);
+                  jumpToBySeqIdx(r.seqIdx, elRef.value.edRef || 'windowDefault');
                   e.preventDefault();
                 },
               },
@@ -214,7 +229,32 @@ export default {
             }
             break;
           case 'lb':
-            vnodes = h('br', { class: getClassName() });
+            if (!elRef.value.attributes.edRef) {
+              vnodes = h('br', {
+                class: getClassName(),
+                'data-type': 'lb',
+                'data-n': elRef.value.attributes.n,
+              });
+            } else if (elRef.value.attributes.edRef === store.state.selectedText.edRef) {
+              vnodes = [
+                h('br', {
+                  class: getClassName(),
+                }),
+                h('span', {
+                  class: getClassName(),
+                  'data-type': 'lb',
+                  'data-edref': elRef.value.attributes.edRef,
+                  'data-n': `[${elRef.value.attributes.n}] `,
+                }),
+              ];
+            } else {
+              vnodes = h('span', {
+                class: getClassName(),
+                'data-type': 'lb',
+                'data-edref': elRef.value.attributes.edRef,
+                'data-n': ` <${elRef.value.attributes.n}> `,
+              });
+            }
             break;
           case 'graphic':
             if (elRef.value.attributes.n) {
@@ -227,6 +267,18 @@ export default {
               {
                 el: elRef.value,
                 parents: parentsRef.value,
+              },
+            );
+            break;
+          case 'add':
+            vnodes = h(
+              mdicon,
+              {
+                name: 'information',
+                title: '付加',
+                onClick: () => {
+                  window.message('add');
+                },
               },
             );
             break;
@@ -254,5 +306,11 @@ export default {
 <style module>
 .tei-pb {
   color: grey;
+}
+.tei-lb::before {
+  color: grey;
+  content: attr(data-n);
+  text-combine-upright: all;
+  margin-bottom: .2rem;
 }
 </style>

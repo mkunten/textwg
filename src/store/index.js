@@ -8,9 +8,29 @@ export default createStore({
     selectedText: {},
     m3Param: {},
     texts: [{
+      provider: 'textwg',
+      items: [{
+        title: '奈良女',
+        edRef: '#奈良女',
+        manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/100260054/manifest',
+        refs: [{
+          title: '南葵',
+          edRef: '#南葵',
+          manifestURI: [
+            'https://iiif.dl.itc.u-tokyo.ac.jp/repo/iiif/b047fc5e-61a7-9c8f-9344-053245cb06c4/manifest',
+            'https://iiif.dl.itc.u-tokyo.ac.jp/repo/iiif/a506c60b-9c34-4c1f-0478-e52605252f9d/manifest',
+            'https://iiif.dl.itc.u-tokyo.ac.jp/repo/iiif/e77cbfbb-52fd-18da-891a-b334ea1fa43d/manifest',
+          ],
+        }],
+        xmls: [{
+          label: '奈良女',
+          uri: 'http://localhost:1323/api/files/xmlbyname/kiryo20221026.xml',
+        }],
+      }],
+    }, {
       provider: 'TEI-EAJ',
       items: [{
-        title: '十六夜日記 corrected',
+        title: '十六夜日記',
         manifestURI: 'https://kotenseki.nijl.ac.jp/biblio/200003074/manifest',
         xmls: [{
           label: '上',

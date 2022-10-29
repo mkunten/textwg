@@ -1,23 +1,26 @@
 <template>
-  <DropDown v-model="selectedText"
-    :options="texts" optionLabel="title"
-    optionGroupChildren="items" optionGroupLabel="provider">
-  </DropDown>
-  <SelectButton v-model="layout"
-    :options="layoutOptions" optionValue="value">
-    <template #option="slotProps">
-      <mdicon :name="slotProps.option.icon"/>
-    </template>
-  </SelectButton>
+  <div>
+    <DropDown v-model="selectedText"
+      :options="texts" optionLabel="title"
+      optionGroupChildren="items" optionGroupLabel="provider">
+    </DropDown>
+    <SelectButton v-model="layout"
+      :options="layoutOptions" optionValue="value"
+      style="display: inline-flex;">
+      <template #option="slotProps">
+        <mdicon :name="slotProps.option.icon"/>
+      </template>
+    </SelectButton>
+  </div>
   <div class="viewer">
     <Splitter :layout="layout">
       <SplitterPanel>
-        <div class="miradorviewer">
+        <div :class="miradorviewerClass">
           <Mirador3 mirador-id="mirador"/>
         </div>
       </SplitterPanel>
       <SplitterPanel>
-        <div class="textviewer">
+        <div :class="textviewerClass">
           <TextViewer/>
         </div>
       </SplitterPanel>
@@ -54,6 +57,12 @@ export default {
     };
   },
   computed: {
+    miradorviewerClass() {
+      return `miradorviewer-${this.layout}`;
+    },
+    textviewerClass() {
+      return `textviewer-${this.layout}`;
+    },
     selectedText: {
       get() {
         return this.$store.state.selectedText;
@@ -82,17 +91,26 @@ export default {
 
 .viewer {
   width: 100%;
-  height: 600px;
+  height: 640px;
   border: 1px solid black;
   overflow: hidden;
 }
 
-.miradorviewer {
+.miradorviewer-horizontal {
+  position: relative;
+  height: 640px;
+}
+.miradorviewer-vertical {
   position: relative;
   height: 100%;
 }
 
-.textviewer {
+.textviewer-horizontal {
+  position: relative;
+  max-width: 95%;
+  height: 600px;
+}
+.textviewer-vertical {
   position: relative;
   max-width: 95%;
   height: 100%;

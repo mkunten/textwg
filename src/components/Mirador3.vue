@@ -1,5 +1,6 @@
 <template>
   <div :id="this.miradorId" class="mirador"></div>
+  <Toast><Button @click="test">test</Button></Toast>
 </template>
 
 <script>
@@ -31,6 +32,10 @@ export default {
     },
   },
   methods: {
+    test() {
+      console.log('test');
+      console.log('test done');
+    },
     getM3Window(windowId = 'windowDefault') {
       return this.m3.store.getState().windows[windowId];
     },
@@ -62,7 +67,29 @@ export default {
       }
     },
     setM3Text(text, windowId = 'windowDefault') {
-      if (this.getM3Window(windowId) !== null) {
+      const num = text.refs ? text.refs.length + 1 : 1;
+      if (num >= 2) {
+        let layout = {
+          first: text.edRef,
+          second: text.refs[0].edRef,
+          direction: 'column',
+        };
+        for (let i = 1; i < num - 2; i += 1) {
+          layout = {
+            first: layout,
+            second: text.refs[i].edRef,
+            direction: 'column',
+          };
+        }
+        this.m3.store.dispatch(Mirador.actions
+          .updateWorkspaceMosaicLayout(layout));
+        this.m3.store.dispatch(Mirador.actions
+          .addWindow({ id: text.edRef, manifestId: text.manifestURI }));
+        text.refs.forEach((r) => {
+          this.m3.store.dispatch(Mirador.actions
+            .addWindow({ id: r.edRef, manifestId: r.manifestURI[0] }));
+        });
+      } else if (this.getM3Window(windowId) !== null) {
         this.m3.store.dispatch(Mirador.actions
           .addWindow({ id: windowId, manifestId: text.manifestURI }));
       } else {
@@ -99,10 +126,10 @@ export default {
       handler(m3Param) {
         switch (m3Param.key) {
           case 'seqIdx':
-            this.setM3CanvasBySeqIdx(m3Param.value);
+            this.setM3CanvasBySeqIdx(m3Param.value, m3Param.windowId);
             break;
           case 'canvasId':
-            this.setM3CanvasById(m3Param.value);
+            this.setM3CanvasById(m3Param.value, m3Param.windowId);
             break;
           default:
             console.error('unexpected setParam key');

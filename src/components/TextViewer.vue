@@ -103,8 +103,7 @@
       :key="xml.label"
       :header="xml.label"
     >
-      <ScrollPanel
-        style="width: 100%; height: 100%;">
+      <ScrollPanel>
         <Tei
           v-if="data[xml.uri]"
           :el="this.data[xml.uri].xml.elements[0].elements[1]"
