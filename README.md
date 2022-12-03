@@ -1,5 +1,7 @@
 # textwg
 
+move to https://github.com/mkunten/textviewer
+
 ## Project setup
 ```
 npm install
